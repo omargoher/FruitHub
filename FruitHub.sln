@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FruitHub.Infrastructure", "FruitHub.Infrastructure\FruitHub.Infrastructure.csproj", "{701F48B5-1E87-4916-9F95-F63840DA0B2E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FruitHub.ApplicationCore", "FruitHub.ApplicationCore\FruitHub.ApplicationCore.csproj", "{6132F8F9-DAD6-44E4-98D4-4CA703DAA023}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FruitHub.API", "FruitHub.API\FruitHub.API.csproj", "{0486BEA9-86AD-47DC-BA8F-5B994D4C723E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FruitHub.Tests", "FruitHub.Tests\FruitHub.Tests.csproj", "{245BEDB0-E8C1-458D-A005-64495F411CCB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{701F48B5-1E87-4916-9F95-F63840DA0B2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{701F48B5-1E87-4916-9F95-F63840DA0B2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{701F48B5-1E87-4916-9F95-F63840DA0B2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{701F48B5-1E87-4916-9F95-F63840DA0B2E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6132F8F9-DAD6-44E4-98D4-4CA703DAA023}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6132F8F9-DAD6-44E4-98D4-4CA703DAA023}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6132F8F9-DAD6-44E4-98D4-4CA703DAA023}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6132F8F9-DAD6-44E4-98D4-4CA703DAA023}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0486BEA9-86AD-47DC-BA8F-5B994D4C723E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0486BEA9-86AD-47DC-BA8F-5B994D4C723E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0486BEA9-86AD-47DC-BA8F-5B994D4C723E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0486BEA9-86AD-47DC-BA8F-5B994D4C723E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{245BEDB0-E8C1-458D-A005-64495F411CCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{245BEDB0-E8C1-458D-A005-64495F411CCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{245BEDB0-E8C1-458D-A005-64495F411CCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{245BEDB0-E8C1-458D-A005-64495F411CCB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

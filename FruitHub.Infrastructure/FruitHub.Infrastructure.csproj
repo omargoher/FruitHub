@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+<!--    to store identity tables-->
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.11"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11"/>
+<!--    To Use Sqlite-->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.11"/>
+<!--     To Use Ef Core-->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11"/>
+<!--    JWT Token creation-->
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\FruitHub.ApplicationCore\FruitHub.ApplicationCore.csproj" />
+    </ItemGroup>
+</Project>
