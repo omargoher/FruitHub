@@ -44,6 +44,14 @@ public class Program
         builder.Services.Configure<JwtOptions>(
             builder.Configuration.GetSection("Jwt"));    
         
+        var imageOptions = new ImageStorageOptions
+        {
+            RootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot/images"),
+            PublicBasePath = "/images"
+        };
+
+        builder.Services.AddSingleton(imageOptions);
+        
         builder.Services.Configure<EmailOptions>(
             builder.Configuration.GetSection("EmailSettings"));
 
@@ -133,10 +141,13 @@ public class Program
             };
         });
 
+        
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
        
         builder.Services.AddScoped<IAuthService, JwtAuthService>();
         builder.Services.AddScoped<ICategoryService, CategoryService>();
+        builder.Services.AddScoped<IProductService, ProductService>();
+        builder.Services.AddScoped<IImageService, ImageService>();
         
         builder.Services.AddScoped<ITokenService, TokenService>();
         

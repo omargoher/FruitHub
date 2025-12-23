@@ -39,7 +39,8 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
         return await query.ToListAsync();
     }
 
-    public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>>? filter = null
+    public async Task<IEnumerable<T>> FindAsync(
+        Expression<Func<T, bool>>? filter = null
         , string[]? includeProperties = null)
     {
         IQueryable<T> query = _context.Set<T>();
