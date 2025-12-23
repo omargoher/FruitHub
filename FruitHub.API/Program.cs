@@ -1,6 +1,8 @@
 using System.Text;
+using FruitHub.API.Middlewares;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Options;
+using FruitHub.ApplicationCore.Services;
 using FruitHub.Infrastructure.Identity;
 using FruitHub.Infrastructure.Interfaces;
 using FruitHub.Infrastructure.Persistence;
@@ -134,6 +136,7 @@ public class Program
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
        
         builder.Services.AddScoped<IAuthService, JwtAuthService>();
+        builder.Services.AddScoped<ICategoryService, CategoryService>();
         
         builder.Services.AddScoped<ITokenService, TokenService>();
         
@@ -153,7 +156,11 @@ public class Program
 
         app.UseAuthorization();
 
-
+        /*
+         * I create this middleware to map the exceptions to right status code and msg
+         */
+        app.UseMiddleware<ExceptionMiddleware>();
+        
         app.MapControllers();
 
         app.Run();

@@ -21,9 +21,10 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
         {
             query = query.Include(string.Join(".", includeProperties));
         }
-
+        
+        // I Use EF.Prpperty => because i use generic repo with generic Key and must every entity use this generic repo include "Id" property  
         return await query.SingleOrDefaultAsync(t =>
-            EqualityComparer<TKey>.Default.Equals(t.Id, id));
+            EF.Property<TKey>(t, "Id").Equals(id));
     }
 
     public async Task<IEnumerable<T>> GetAllAsync(string[]? includeProperties = null)
@@ -70,8 +71,8 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
         var entityToDelete = Activator.CreateInstance<T>();
         entityToDelete.Id = id;
         
-        // if (entityToDelete == null)
-            // throw new KeyNotFoundException($"{typeof(T).Name} not found");
+        if (entityToDelete == null)
+            throw new KeyNotFoundException($"{typeof(T).Name} not found");
         
         Delete(entityToDelete);
     }
