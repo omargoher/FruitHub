@@ -12,15 +12,23 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
     {
         _context = context;
     }
-    
-    public async Task<T?> GetByIdAsync(TKey id, string[]? includeProperties = null)
+
+    // Add Method return quary to can extend another things like orderBy and delete code include includes in another methods
+    public IQueryable<T> Query(string[]? includes)
     {
         IQueryable<T> query = _context.Set<T>();
 
-        if (includeProperties != null)
+        if (includes != null)
         {
-            query = query.Include(string.Join(".", includeProperties));
+            query = query.Include(string.Join(".", includes));
         }
+
+        return query.AsNoTracking();
+    }
+    
+    public async Task<T?> GetByIdAsync(TKey id, string[]? includeProperties = null)
+    {
+        IQueryable<T> query = Query(includeProperties);
         
         // I Use EF.Prpperty => because i use generic repo with generic Key and must every entity use this generic repo include "Id" property  
         return await query.SingleOrDefaultAsync(t =>
@@ -29,12 +37,7 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
 
     public async Task<IEnumerable<T>> GetAllAsync(string[]? includeProperties = null)
     {
-        IQueryable<T> query = _context.Set<T>();
-
-        if (includeProperties != null)
-        {
-            query = query.Include(string.Join(".", includeProperties));
-        }
+        IQueryable<T> query = Query(includeProperties);
 
         return await query.ToListAsync();
     }
@@ -43,7 +46,7 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
         Expression<Func<T, bool>>? filter = null
         , string[]? includeProperties = null)
     {
-        IQueryable<T> query = _context.Set<T>();
+        IQueryable<T> query = Query(includeProperties);
 
         if (filter != null)
         {

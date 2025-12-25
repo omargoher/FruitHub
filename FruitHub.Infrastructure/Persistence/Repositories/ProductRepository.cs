@@ -1,3 +1,4 @@
+using FruitHub.ApplicationCore.Enums;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Models;
 using FruitHub.Infrastructure.Interfaces;
@@ -18,5 +19,10 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
             .Where(p => p.Category.Id == categoryId);
 
         return await products.ToListAsync();
+    }
+
+    public async Task<IEnumerable<Product>> SortByAsync(ProductSortBy sortBy, SortDirection sortDirection = SortDirection.Asc)
+    {
+        throw new NotImplementedException();
     }
 }

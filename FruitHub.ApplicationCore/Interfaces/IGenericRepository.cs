@@ -4,6 +4,7 @@ namespace FruitHub.ApplicationCore.Interfaces;
 
 public interface IGenericRepository<T, TKey> where T : class
 {
+    IQueryable<T> Query(string[]? includes);
     Task<T?> GetByIdAsync(TKey id, string[]? includeProperties = null);
     
     Task<IEnumerable<T>?> GetAllAsync(string[]? includeProperties = null);

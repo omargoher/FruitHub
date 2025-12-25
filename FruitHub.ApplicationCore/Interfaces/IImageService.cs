@@ -1,5 +1,5 @@
 
-namespace FruitHub.Infrastructure.Interfaces;
+namespace FruitHub.ApplicationCore.Interfaces;
 
 public interface IImageService
 {

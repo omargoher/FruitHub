@@ -1,4 +1,5 @@
 using FruitHub.ApplicationCore.DTOs.Product;
+using FruitHub.ApplicationCore.Enums;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Models;
 
@@ -8,19 +9,29 @@ public class ProductService : IProductService
 {
     private readonly IUnitOfWork _uow;
     private readonly IProductRepository _productRepo;
+    private readonly IImageService _imageService;
 
-    public ProductService(IUnitOfWork uow)
+    public ProductService(IUnitOfWork uow, IImageService imageService)
     {
         _uow = uow;
         _productRepo = uow.Products();
+        _imageService = imageService;
     }
     
-    public async Task<IReadOnlyList<Product>?> GetAllAsync()
+    public async Task<IReadOnlyList<Product>?> GetAllAsync(ProductSortBy sortBy, SortDirection sortDirection = SortDirection.Asc)
     {
         var includeProperties = new string[] {"Category"};
         
-        var categories = await _productRepo.GetAllAsync(includeProperties);
-        return (IReadOnlyList<Product>?)categories;
+        var products = await _productRepo.GetAllAsync(includeProperties);
+        
+        products = sortBy switch
+        {
+            ProductSortBy.Price =>
+                sortDirection == SortDirection.Asc
+                    ? products.OrderBy(p => p.Price)
+                    : products.OrderByDescending(p => p.Price),
+        };
+        return (IReadOnlyList<Product>?)products;
     }
 
     public async Task<Product?> GetByIdAsync(int id)
@@ -48,11 +59,14 @@ public class ProductService : IProductService
         return (IReadOnlyList<Product>?)products;
     }
 
-    public async Task CreateAsync(CreateProductDto dto, string imagePath)
+    public async Task CreateAsync(CreateProductDto dto, ImageDto imageDto)
     {
         if (dto == null)
             throw new ArgumentException("Product Data is required");
         
+        var imagePath = await _imageService
+            .SaveAsync(imageDto.Content, imageDto.FileName, imageDto.ContentType);
+
         var product = new Product
         {
             Name = dto.Name ,
@@ -64,42 +78,53 @@ public class ProductService : IProductService
             ImagePath = imagePath,
             Stock = dto.Stock,
             CategoryId = dto.CategoryId,
-            AdminId = 1
+            AdminId = 1 // in this case i has only one admin
         };
         
         _productRepo.Insert(product);
         await _uow.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(UpdateProductDto dto, string? imagePath = null)
+    public async Task UpdateAsync(UpdateProductDto dto, ImageDto? imageDto = null)
     {
-        if (dto == null)
-            return;
-
         var product = await _productRepo.GetByIdAsync(dto.Id);
         
         if (product == null)
             throw new KeyNotFoundException("Product not found");
 
-        product.Id = dto.Id;
+        string oldImagePath = product.ImagePath;
+        
+        if (imageDto != null)
+        {
+            product.ImagePath = await _imageService.SaveAsync(imageDto.Content, imageDto.FileName, imageDto.ContentType);
+        }
         product.Name = dto.Name ?? product.Name;
         product.Price = dto.Price ?? product.Price;
         product.Calories = dto.Calories ?? product.Calories;
         product.Description = dto.Description ?? product.Description;
         product.Organic = dto.Organic ?? product.Organic;
         product.ExpirationPeriodByDays = dto.ExpirationPeriodByDays ?? product.ExpirationPeriodByDays;
-        product.ImagePath = imagePath ?? product.ImagePath;
         product.Stock = dto.Stock ?? product.Stock;
         product.CategoryId = dto.CategoryId ?? product.CategoryId ;
         
         _productRepo.Update(product);
         await _uow.SaveChangesAsync();
-        
+
+        if (oldImagePath != product.ImagePath)
+        {
+            await _imageService.DeleteAsync(oldImagePath);
+        }
     }
 
     public async Task DeleteAsync(int id)
     {
-        _productRepo.DeleteById(id);
+        var product = await _productRepo.GetByIdAsync(id);
+        if (product == null)
+            throw new KeyNotFoundException("Product not found");
+        
+        await _imageService.DeleteAsync(product.ImagePath);
+        
+        _productRepo.Delete(product);
         await _uow.SaveChangesAsync();
     }
 }

@@ -45,26 +45,36 @@ public class ProductsController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> CreateAsync([FromForm]CreateProductDto dto, [FromForm]IFormFile image)
     {
-        var imagePath = await _imageService
-            .SaveAsync(image.OpenReadStream(), image.FileName, image.ContentType);
+        var imageDto = new ImageDto
+        {
+            Content = image.OpenReadStream(),
+            FileName = image.FileName,
+            ContentType = image.ContentType
+        };
         
-        await _productService.CreateAsync(dto, imagePath);
+        await _productService.CreateAsync(dto, imageDto);
         
         return Created();
     }
     
-    // TODO Delete old Image when update
     [HttpPatch("{id:int}")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> UpdateAsync([FromRoute]int id, [FromForm]UpdateProductDto dto, [FromForm]IFormFile? image = null)
     {
         dto.Id = id;
-        string imagePath = null;
-        if(image != null)
-            imagePath = await _imageService.
-                SaveAsync(image.OpenReadStream(), image.FileName, image.ContentType);
+        ImageDto? imageDto = null;
+        
+        if (image != null)
+        {
+            imageDto = new ImageDto
+            {
+                Content = image.OpenReadStream(),
+                FileName = image.FileName,
+                ContentType = image.ContentType
+            };
+        }
 
-        await _productService.UpdateAsync(dto, imagePath);
+        await _productService.UpdateAsync(dto, imageDto);
             
         return NoContent();
     }
