@@ -13,78 +13,33 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
         _context = context;
     }
 
-    // Add Method return quary to can extend another things like orderBy and delete code include includes in another methods
-    public IQueryable<T> Query(string[]? includes)
+    public async Task<T?> GetByIdAsync(TKey id)
     {
-        IQueryable<T> query = _context.Set<T>();
-
-        if (includes != null)
-        {
-            query = query.Include(string.Join(".", includes));
-        }
-
-        return query.AsNoTracking();
-    }
-    
-    public async Task<T?> GetByIdAsync(TKey id, string[]? includeProperties = null)
-    {
-        IQueryable<T> query = Query(includeProperties);
-        
-        // I Use EF.Prpperty => because i use generic repo with generic Key and must every entity use this generic repo include "Id" property  
-        return await query.SingleOrDefaultAsync(t =>
-            EF.Property<TKey>(t, "Id").Equals(id));
+        return await  _context.Set<T>().FindAsync(id);
     }
 
-    public async Task<IEnumerable<T>> GetAllAsync(string[]? includeProperties = null)
+    public async Task<IEnumerable<T>?> GetAllAsync()
     {
-        IQueryable<T> query = Query(includeProperties);
-
-        return await query.ToListAsync();
+        return await _context.Set<T>().ToListAsync();
     }
 
-    public async Task<IEnumerable<T>> FindAsync(
-        Expression<Func<T, bool>>? filter = null
-        , string[]? includeProperties = null)
+    public async Task<IEnumerable<T>?> FindAsync(Expression<Func<T, bool>> filter)
     {
-        IQueryable<T> query = Query(includeProperties);
-
-        if (filter != null)
-        {
-            query = query.Where(filter);
-        }
-        if (includeProperties != null)
-        {
-            query = query.Include(string.Join(".", includeProperties));
-        }
-
-        return await query.ToListAsync();
+        return await _context.Set<T>().Where(filter).ToListAsync();
     }
 
-    public void Insert(T entity)
+    public void Add(T entity)
     {
         _context.Set<T>().Add(entity);
     }
 
-    public void Update(T entityToUpdate)
+    public void Update(T entity)
     {
-        _context.Set<T>().Update(entityToUpdate);
+        _context.Set<T>().Update(entity);
     }
-    
-    public void DeleteById(TKey id)
+   
+    public void Remove(T entity)
     {
-        var entityToDelete = Activator.CreateInstance<T>();
-        entityToDelete.Id = id;
-        
-        if (entityToDelete == null)
-            throw new KeyNotFoundException($"{typeof(T).Name} not found");
-        
-        Delete(entityToDelete);
+        _context.Set<T>().Remove(entity);
     }
-
-    public void Delete(T entityToDelete)
-    {
-        _context.Set<T>().Remove(entityToDelete);
-    }
-
-    
 }

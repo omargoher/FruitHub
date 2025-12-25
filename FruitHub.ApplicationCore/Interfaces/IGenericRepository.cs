@@ -2,23 +2,19 @@ using System.Linq.Expressions;
 
 namespace FruitHub.ApplicationCore.Interfaces;
 
+// I Make Interface has generic Id and every entity implement this interface becuse this generic repo work with any entity even if i type is diff
+// I remove includes for GetAll and GetById and Find => take every enity make own repo and implement method and include him need
 public interface IGenericRepository<T, TKey> where T : class
 {
-    IQueryable<T> Query(string[]? includes);
-    Task<T?> GetByIdAsync(TKey id, string[]? includeProperties = null);
+    Task<T?> GetByIdAsync(TKey id);
     
-    Task<IEnumerable<T>?> GetAllAsync(string[]? includeProperties = null);
+    Task<IEnumerable<T>?> GetAllAsync();
 
-    Task<IEnumerable<T>?> FindAsync(Expression<Func<T, bool>>? filter = null
-        , string[]? includeProperties = null);
+    Task<IEnumerable<T>?> FindAsync(Expression<Func<T, bool>> filter);
 
-    void Insert(T entity);
+    void Add(T entity);
     
-    void Update(T entityToUpdate);
+    void Update(T entity);
     
-    void DeleteById(TKey id);
-    
-    void Delete(T entityToDelete);
-    
-
+    void Remove(T entity);
 }
