@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using FruitHub.ApplicationCore.DTOs.Category;
 using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Models;
 
 namespace FruitHub.ApplicationCore.Services;
@@ -9,19 +10,17 @@ namespace FruitHub.ApplicationCore.Services;
  * TODO UPDATE CATEGORY => DONE
  * TODO DELETE CATEGORY => DONE
  * TODO GET ALL CATEGORY  => DONE
- * TODO GET ALL PRODUCT FOR CATEGORY => SET IT IN PRODUCT SERVICE
- * TODO GET NUMBER OF PRODUCTS IN CATEGORY => SET IT IN PRODUCT SERVICE
  * TODO Refactore Exception => Create Custom Exception to pass code and message
  */
 public class CategoryService : ICategoryService
 {
     private readonly IUnitOfWork _uow;
-    private readonly IGenericRepository<Category,int> _categoryRepo;
+    private readonly ICategoryRepository _categoryRepo;
 
     public CategoryService(IUnitOfWork uow)
     {
         _uow = uow;
-        _categoryRepo = uow.Repository<Category, int>();
+        _categoryRepo = uow.Category;
     }
 
     /*
@@ -45,7 +44,7 @@ public class CategoryService : ICategoryService
             Name = name 
         };
         
-        _categoryRepo.Insert(category);
+        _categoryRepo.Add(category);
         await _uow.SaveChangesAsync();
     }
     
@@ -69,7 +68,14 @@ public class CategoryService : ICategoryService
     
     public async Task DeleteAsync(int id)
     {
-        _categoryRepo.DeleteById(id);
+        var category = await _categoryRepo.GetByIdAsync(id);
+        
+        if (category == null)
+        {
+            throw new KeyNotFoundException("Category not found");
+        }
+        
+        _categoryRepo.Remove(category);
         await _uow.SaveChangesAsync();
     }
 }

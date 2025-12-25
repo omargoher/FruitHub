@@ -1,7 +1,7 @@
 using FruitHub.ApplicationCore.Enums;
 using FruitHub.ApplicationCore.Models;
 
-namespace FruitHub.ApplicationCore.Interfaces;
+namespace FruitHub.ApplicationCore.Interfaces.Repository;
 
 public interface IProductRepository : IGenericRepository<Product, int>
 {

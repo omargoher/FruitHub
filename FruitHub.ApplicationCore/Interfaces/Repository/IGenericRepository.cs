@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace FruitHub.ApplicationCore.Interfaces;
+namespace FruitHub.ApplicationCore.Interfaces.Repository;
 
 // I Make Interface has generic Id and every entity implement this interface becuse this generic repo work with any entity even if i type is diff
 // I remove includes for GetAll and GetById and Find => take every enity make own repo and implement method and include him need

@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Interfaces;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,7 +1,7 @@
 using FruitHub.ApplicationCore.Enums;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Models;
-using FruitHub.Infrastructure.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Repository;
 using Microsoft.EntityFrameworkCore;
 
 namespace FruitHub.Infrastructure.Persistence.Repositories;

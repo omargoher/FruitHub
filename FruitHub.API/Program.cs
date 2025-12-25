@@ -1,6 +1,7 @@
 using System.Text;
 using FruitHub.API.Middlewares;
 using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.ApplicationCore.Services;
 using FruitHub.Infrastructure.Identity;
