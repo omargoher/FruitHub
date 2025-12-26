@@ -1,5 +1,5 @@
 using FruitHub.ApplicationCore.DTOs.Auth.Register;
-using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FruitHub.API.Controllers;

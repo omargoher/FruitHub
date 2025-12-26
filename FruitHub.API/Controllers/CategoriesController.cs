@@ -1,5 +1,5 @@
 using FruitHub.ApplicationCore.DTOs.Category;
-using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FruitHub.API.Controllers;
@@ -9,10 +9,12 @@ namespace FruitHub.API.Controllers;
 public class CategoriesController : ControllerBase
 {
     private readonly  ICategoryService _categoryService;
+    private readonly  IProductService _productService;
 
-    public CategoriesController(ICategoryService categoryService)
+    public CategoriesController(ICategoryService categoryService, IProductService productService)
     {
         _categoryService = categoryService;
+        _productService = productService;
     }
     
     [HttpGet]
@@ -21,6 +23,14 @@ public class CategoriesController : ControllerBase
         var categories = await _categoryService.GetAllAsync();
         
         return Ok(categories);
+    }
+    
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetProductsAsync(int id)
+    {
+        var products = await _productService.GetByCategoryAsync(id);
+        
+        return Ok(products);
     }
     
     [HttpPost]
