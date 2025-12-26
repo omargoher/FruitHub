@@ -1,7 +1,7 @@
 using System.Text;
 using FruitHub.API.Middlewares;
 using FruitHub.ApplicationCore.Interfaces;
-using FruitHub.ApplicationCore.Interfaces.Repository;
+using FruitHub.ApplicationCore.Interfaces.Services;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.ApplicationCore.Services;
 using FruitHub.Infrastructure.Identity;
@@ -162,6 +162,7 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
+            app.UseDeveloperExceptionPage();
         }
 
         app.UseHttpsRedirection();

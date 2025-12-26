@@ -1,7 +1,5 @@
-using FruitHub.ApplicationCore.DTOs.Category;
 using FruitHub.ApplicationCore.DTOs.Product;
-using FruitHub.ApplicationCore.Interfaces;
-using FruitHub.Infrastructure.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FruitHub.API.Controllers;
@@ -11,35 +9,37 @@ namespace FruitHub.API.Controllers;
 public class ProductsController : ControllerBase
 {
     private readonly  IProductService _productService;
-    private readonly  IImageService _imageService;
 
-    public ProductsController(IProductService productService,  IImageService imageService)
+    public ProductsController(IProductService productService)
     {
         _productService = productService;
-        _imageService = imageService;
     }
     
     [HttpGet]
-    public async Task<IActionResult> GetAsync([FromQuery] string? search)
+    public async Task<IActionResult> GetAsync([FromQuery] ProductQuery query)
     {
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var result = await _productService.SearchAsync(search);
-            return Ok(result);
-        }
+        var products = await _productService.GetAllAsync(query);
 
-        var products = await _productService.GetAllAsync();
+        if (!products.Any())
+        {
+            return NoContent();
+        }
+        
         return Ok(products);
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetByIdAsync(int id)
     {
-        var categories = await _productService.GetByIdAsync(id);
+        var product = await _productService.GetByIdAsync(id);
         
-        return Ok(categories);
+        if (product == null)
+        {
+            return NoContent();
+        }
+        
+        return Ok(product);
     }
-    
     
     [HttpPost]
     [Consumes("multipart/form-data")]
@@ -59,7 +59,10 @@ public class ProductsController : ControllerBase
     
     [HttpPatch("{id:int}")]
     [Consumes("multipart/form-data")]
-    public async Task<IActionResult> UpdateAsync([FromRoute]int id, [FromForm]UpdateProductDto dto, [FromForm]IFormFile? image = null)
+    public async Task<IActionResult> UpdateAsync(
+        [FromRoute]int id, 
+        [FromForm]UpdateProductDto dto, 
+        [FromForm]IFormFile? image = null)
     {
         dto.Id = id;
         ImageDto? imageDto = null;
