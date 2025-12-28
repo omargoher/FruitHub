@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using FruitHub.ApplicationCore.DTOs.Category;
 using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.Interfaces.Services;
@@ -28,10 +29,14 @@ public class CategoriesController : ControllerBase
             return NoContent();
         }
         
-        return Ok(categories);
+        return Ok(categories.Select(c => new
+        {
+            c.Id,
+            c.Name
+        }));
     }
     
-    [HttpGet("{id:int}")]
+    [HttpGet("{id:int}/products")]
     public async Task<IActionResult> GetProductsAsync(int id, [FromQuery]ProductQuery productQuery)
     {
         var products = await _productService.GetByCategoryAsync(id, productQuery);

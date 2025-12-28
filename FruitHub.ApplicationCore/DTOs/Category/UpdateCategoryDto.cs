@@ -4,9 +4,9 @@ namespace FruitHub.ApplicationCore.DTOs.Category;
 
 public class UpdateCategoryDto
 {
-    [Required]
     public int Id { get; set; }
 
-    [Required] 
+    [Required]
+    [StringLength(100, MinimumLength = 3)]
     public string Name { get; set; } = null!;
 }

@@ -13,16 +13,14 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
     {
     }
 
-    private IQueryable<Product> ApplyProductQuery(
-        IQueryable<Product> query,
-        ProductQuery productQuery)
+    private IQueryable<Product> ApplyProductQuery(IQueryable<Product> query, ProductQuery productQuery)
     {
-        
         if (!string.IsNullOrWhiteSpace(productQuery.Search))
         {
+            var search = productQuery.Search.Trim().ToLower();
             query = query.Where(p =>
-                p.Name.Contains(productQuery.Search) ||
-                p.Description.Contains(productQuery.Search));
+                p.Name.ToLower().Contains(search) ||
+                p.Description.ToLower().Contains(search));
         }
 
         query = productQuery.SortBy switch
@@ -78,55 +76,6 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
             ImagePath = p.ImagePath
         }).ToListAsync();
     }
-    // public async Task<IReadOnlyList<Product>> GetProductsWithCategoriesAsync(ProductQuery productQuery)
-    // {
-    //     IQueryable<Product> query = _context.Products
-    //         .AsNoTracking()
-    //         .Include(p => p.Category);
-    //
-    //     if (!string.IsNullOrWhiteSpace(productQuery.Search))
-    //     {
-    //         query = query.Where(p =>
-    //             p.Name.Contains(productQuery.Search) ||
-    //             p.Description.Contains(productQuery.Search));
-    //     }
-    //
-    //     query = productQuery.SortBy switch
-    //     {
-    //         ProductSortBy.Name => (productQuery.SortDir == SortDirection.Asc)
-    //             ? query.OrderBy(p => p.Name)
-    //             : query.OrderByDescending(p => p.Name),
-    //
-    //         ProductSortBy.Price => (productQuery.SortDir == SortDirection.Asc)
-    //             ? query.OrderBy(p => p.Price)
-    //             : query.OrderByDescending(p => p.Price),
-    //
-    //         ProductSortBy.ExpirationPeriod => (productQuery.SortDir == SortDirection.Asc)
-    //             ? query.OrderBy(p => p.ExpirationPeriodByDays)
-    //             : query.OrderByDescending(p => p.ExpirationPeriodByDays),
-    //         
-    //         ProductSortBy.Calories => (productQuery.SortDir == SortDirection.Asc)
-    //             ? query.OrderBy(p => p.Calories)
-    //             : query.OrderByDescending(p => p.Calories),
-    //         
-    //         ProductSortBy.MostSelling => 
-    //             query.OrderByDescending(p => p.OrderItems.Sum(oi => oi.Quentity)), 
-    //         
-    //         _ => query.OrderBy(p => p.Id)
-    //     };
-    //
-    //     if (productQuery.Offset.HasValue)
-    //     {
-    //         query = query.Skip(productQuery.Offset.Value);
-    //     }
-    //     
-    //     if (productQuery.Limit.HasValue)
-    //     {
-    //         query = query.Take(productQuery.Limit.Value);
-    //     }
-    //
-    //     return await query.ToListAsync();
-    // }
 
     public async Task<SingleProductResponseDto?> GetProductByIdWithCategoryAsync(int id)
     {
@@ -137,7 +86,15 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
                 Id = p.Id,
                 Name = p.Name,
                 Price = p.Price,
-                ImagePath = p.ImagePath
+                Calories = p.Calories,
+                Description = p.Description,
+                Organic = p.Organic,
+                ExpirationPeriodByDays = p.ExpirationPeriodByDays,
+                Stock = p.Stock,
+                ImagePath = p.ImagePath,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category.Name,
+                
             }).SingleOrDefaultAsync(p => p.Id == id);
         return product;
     }

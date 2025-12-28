@@ -15,6 +15,13 @@ public class ProductsController : ControllerBase
         _productService = productService;
     }
     
+    /*
+     * TODO
+     * http://localhost:5259/api/products?sortby=mostselling => try this when add orders to check it
+     *
+     * TODO
+     * http://localhost:5259/api/products?sortby=price&sortdir=desc => error with sqlite => try it with sqlserver
+     */
     [HttpGet]
     public async Task<IActionResult> GetAsync([FromQuery] ProductQuery query)
     {

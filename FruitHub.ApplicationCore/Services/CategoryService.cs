@@ -6,13 +6,7 @@ using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Models;
 
 namespace FruitHub.ApplicationCore.Services;
-/*
- * TODO CREATE CATEGORY => DONE
- * TODO UPDATE CATEGORY => DONE
- * TODO DELETE CATEGORY => DONE
- * TODO GET ALL CATEGORY  => DONE
- * TODO Refactore Exception => Create Custom Exception to pass code and message
- */
+
 public class CategoryService : ICategoryService
 {
     private readonly IUnitOfWork _uow;

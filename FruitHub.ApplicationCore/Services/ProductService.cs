@@ -44,6 +44,9 @@ public class ProductService : IProductService
         if (dto == null)
             throw new ArgumentException("Product Data is required");
         
+        if (imageDto == null)
+            throw new ArgumentException("Image is required");
+        
         var imagePath = await _imageService
             .SaveAsync(imageDto.Content, imageDto.FileName, imageDto.ContentType);
 
