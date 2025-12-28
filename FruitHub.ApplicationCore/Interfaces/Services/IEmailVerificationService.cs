@@ -1,6 +1,6 @@
 using FruitHub.ApplicationCore.DTOs.Auth.EmailVerification;
 
-namespace FruitHub.ApplicationCore.Interfaces;
+namespace FruitHub.ApplicationCore.Interfaces.Services;
 
 public interface IEmailVerificationService
 {

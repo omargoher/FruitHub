@@ -4,6 +4,7 @@ using FruitHub.ApplicationCore.DTOs.Auth.Login;
 using FruitHub.ApplicationCore.DTOs.Auth.Refresh;
 using FruitHub.ApplicationCore.DTOs.Auth.Register;
 using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Models;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.Infrastructure.Identity;
@@ -175,7 +176,7 @@ public class JwtAuthServicesTest
             .Setup(x => x.DeleteAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync(IdentityResult.Success);
         
-        _repositories.Setup(x => x.Repository<User, int>().Insert(It.IsAny<User>()));
+        _repositories.Setup(x => x.User.Add(It.IsAny<User>()));
         _repositories.Setup(x => x.SaveChangesAsync())
             .ReturnsAsync(0);
         
@@ -210,7 +211,7 @@ public class JwtAuthServicesTest
             .Setup(x => x.DeleteAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync(IdentityResult.Success);
         
-        _repositories.Setup(x => x.Repository<User, int>().Insert(It.IsAny<User>()));
+        _repositories.Setup(x => x.User.Add(It.IsAny<User>()));
         _repositories
             .Setup(x => x.SaveChangesAsync())
             .ThrowsAsync(new InvalidOperationException("DB is down"));
@@ -243,7 +244,7 @@ public class JwtAuthServicesTest
             .Setup(x => x.DeleteAsync(It.IsAny<ApplicationUser>()))
             .ReturnsAsync(IdentityResult.Success);
         
-        _repositories.Setup(x => x.Repository<User, int>().Insert(It.IsAny<User>()));
+        _repositories.Setup(x => x.User.Add(It.IsAny<User>()));
         _repositories
             .Setup(x => x.SaveChangesAsync())
             .ReturnsAsync(1);

@@ -1,3 +1,4 @@
+using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.Enums;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Models;
@@ -11,18 +12,153 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
     public ProductRepository(ApplicationDbContext context) :base(context)
     {
     }
+
+    private IQueryable<Product> ApplyProductQuery(
+        IQueryable<Product> query,
+        ProductQuery productQuery)
+    {
+        
+        if (!string.IsNullOrWhiteSpace(productQuery.Search))
+        {
+            query = query.Where(p =>
+                p.Name.Contains(productQuery.Search) ||
+                p.Description.Contains(productQuery.Search));
+        }
+
+        query = productQuery.SortBy switch
+        {
+            ProductSortBy.Name => (productQuery.SortDir == SortDirection.Asc)
+                ? query.OrderBy(p => p.Name)
+                : query.OrderByDescending(p => p.Name),
+
+            ProductSortBy.Price => (productQuery.SortDir == SortDirection.Asc)
+                ? query.OrderBy(p => p.Price)
+                : query.OrderByDescending(p => p.Price),
+
+            ProductSortBy.ExpirationPeriod => (productQuery.SortDir == SortDirection.Asc)
+                ? query.OrderBy(p => p.ExpirationPeriodByDays)
+                : query.OrderByDescending(p => p.ExpirationPeriodByDays),
+            
+            ProductSortBy.Calories => (productQuery.SortDir == SortDirection.Asc)
+                ? query.OrderBy(p => p.Calories)
+                : query.OrderByDescending(p => p.Calories),
+            
+            ProductSortBy.MostSelling => 
+                query.OrderByDescending(p => p.OrderItems.Sum(oi => oi.Quentity)), 
+            
+            _ => query.OrderBy(p => p.Id)
+        };
+
+        if (productQuery.Offset.HasValue)
+        {
+            query = query.Skip(productQuery.Offset.Value);
+        }
+        
+        if (productQuery.Limit.HasValue)
+        {
+            query = query.Take(productQuery.Limit.Value);
+        }
+
+        return query;
+    }
     
-    public async Task<IEnumerable<Product>> GetByCategoryAsync(int categoryId)
+    public async Task<IReadOnlyList<ProductResponseDto>> GetProductsAsync(ProductQuery productQuery)
     {
-        var products = _context.Set<Product>()
+        // i am not need send categories with response so not include it in queries 
+        IQueryable<Product> query = _context.Products
+            .AsNoTracking();
+
+        query = ApplyProductQuery(query, productQuery);
+
+        return await query.Select(p => new ProductResponseDto
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Price = p.Price,
+            ImagePath = p.ImagePath
+        }).ToListAsync();
+    }
+    // public async Task<IReadOnlyList<Product>> GetProductsWithCategoriesAsync(ProductQuery productQuery)
+    // {
+    //     IQueryable<Product> query = _context.Products
+    //         .AsNoTracking()
+    //         .Include(p => p.Category);
+    //
+    //     if (!string.IsNullOrWhiteSpace(productQuery.Search))
+    //     {
+    //         query = query.Where(p =>
+    //             p.Name.Contains(productQuery.Search) ||
+    //             p.Description.Contains(productQuery.Search));
+    //     }
+    //
+    //     query = productQuery.SortBy switch
+    //     {
+    //         ProductSortBy.Name => (productQuery.SortDir == SortDirection.Asc)
+    //             ? query.OrderBy(p => p.Name)
+    //             : query.OrderByDescending(p => p.Name),
+    //
+    //         ProductSortBy.Price => (productQuery.SortDir == SortDirection.Asc)
+    //             ? query.OrderBy(p => p.Price)
+    //             : query.OrderByDescending(p => p.Price),
+    //
+    //         ProductSortBy.ExpirationPeriod => (productQuery.SortDir == SortDirection.Asc)
+    //             ? query.OrderBy(p => p.ExpirationPeriodByDays)
+    //             : query.OrderByDescending(p => p.ExpirationPeriodByDays),
+    //         
+    //         ProductSortBy.Calories => (productQuery.SortDir == SortDirection.Asc)
+    //             ? query.OrderBy(p => p.Calories)
+    //             : query.OrderByDescending(p => p.Calories),
+    //         
+    //         ProductSortBy.MostSelling => 
+    //             query.OrderByDescending(p => p.OrderItems.Sum(oi => oi.Quentity)), 
+    //         
+    //         _ => query.OrderBy(p => p.Id)
+    //     };
+    //
+    //     if (productQuery.Offset.HasValue)
+    //     {
+    //         query = query.Skip(productQuery.Offset.Value);
+    //     }
+    //     
+    //     if (productQuery.Limit.HasValue)
+    //     {
+    //         query = query.Take(productQuery.Limit.Value);
+    //     }
+    //
+    //     return await query.ToListAsync();
+    // }
+
+    public async Task<SingleProductResponseDto?> GetProductByIdWithCategoryAsync(int id)
+    {
+        var product = await _context.Products
             .Include(p => p.Category)
-            .Where(p => p.Category.Id == categoryId);
-
-        return await products.ToListAsync();
+            .Select(p => new SingleProductResponseDto 
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                ImagePath = p.ImagePath
+            }).SingleOrDefaultAsync(p => p.Id == id);
+        return product;
     }
-
-    public async Task<IEnumerable<Product>> SortByAsync(ProductSortBy sortBy, SortDirection sortDirection = SortDirection.Asc)
+    
+    public async Task<IReadOnlyList<ProductResponseDto>> GetByCategoryAsync(int categoryId, ProductQuery productQuery)
     {
-        throw new NotImplementedException();
+        IQueryable<Product> query = _context.Products
+            .AsNoTracking();
+
+        query = ApplyProductQuery(query, productQuery);
+        
+        // i am not need send categories with response so not include it in queries 
+        query = query.Where(p => p.CategoryId == categoryId);
+    
+        return await query.Select(p => new ProductResponseDto
+        {
+            Id = p.Id,
+            Name = p.Name,
+            Price = p.Price,
+            ImagePath = p.ImagePath
+        }).ToListAsync();
     }
+ 
 }

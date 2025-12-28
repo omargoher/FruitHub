@@ -1,6 +1,6 @@
 using FruitHub.ApplicationCore.DTOs;
 using FruitHub.ApplicationCore.DTOs.Auth.EmailVerification;
-using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Services;
 using FruitHub.Infrastructure.Identity;
 using FruitHub.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Identity;

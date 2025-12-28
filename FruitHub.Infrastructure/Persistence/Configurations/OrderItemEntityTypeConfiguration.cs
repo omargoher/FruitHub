@@ -20,7 +20,7 @@ public class OrderItemEntityTypeConfiguration : IEntityTypeConfiguration<OrderIt
             .IsRequired();
         
         builder.HasOne(oi => oi.Product)
-            .WithMany()
+            .WithMany(p => p.OrderItems)
             .HasForeignKey(oi => oi.ProductId)
             .IsRequired();
     }

@@ -1,5 +1,5 @@
 using FruitHub.ApplicationCore.Options;
-using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Services;
 
 namespace FruitHub.Infrastructure.Services;
 public class ImageService : IImageService

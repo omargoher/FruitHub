@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using FruitHub.ApplicationCore.DTOs.Category;
 using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Services;
 using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Models;
 
@@ -28,10 +29,11 @@ public class CategoryService : ICategoryService
      * 1. is aleady list not query .. it is executed
      * 2. not use List<> becuase not anyone modify it
      */
-    public async Task<IReadOnlyList<Category>?> GetAllAsync()
+    public async Task<IReadOnlyList<Category>> GetAllAsync()
     {
         var categories = await _categoryRepo.GetAllAsync();
-        return (IReadOnlyList<Category>?)categories;
+        
+        return categories;
     }
     
     public async Task CreateAsync(string name)

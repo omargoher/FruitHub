@@ -7,10 +7,12 @@ using FruitHub.ApplicationCore.DTOs.Auth.Login;
 using FruitHub.ApplicationCore.DTOs.Auth.Refresh;
 using FruitHub.ApplicationCore.DTOs.Auth.Register;
 using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Models;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.Infrastructure.Identity;
 using FruitHub.Infrastructure.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -75,7 +77,7 @@ public class JwtAuthService : IAuthService
                 FullName = registerDto.FullName
             };
             
-            _repositories.Repository<User, int>().Insert(user);
+            _repositories.User.Add(user);
 
             var result = await _repositories.SaveChangesAsync();
             if (result == 0)

@@ -19,12 +19,12 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
         return await  _context.Set<T>().FindAsync(id);
     }
 
-    public async Task<IEnumerable<T>?> GetAllAsync()
+    public async Task<IReadOnlyList<T>> GetAllAsync()
     {
         return await _context.Set<T>().ToListAsync();
     }
 
-    public async Task<IEnumerable<T>?> FindAsync(Expression<Func<T, bool>> filter)
+    public async Task<IReadOnlyList<T>> FindAsync(Expression<Func<T, bool>> filter)
     {
         return await _context.Set<T>().Where(filter).ToListAsync();
     }

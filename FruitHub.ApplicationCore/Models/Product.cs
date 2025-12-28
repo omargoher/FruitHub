@@ -17,4 +17,6 @@ public class Product : IEntity<int>
     public Category Category { get; set; } = null!;
     public int AdminId { get; set; }
     public Admin Admin { get; set; } = null!;
+
+    public List<OrderItem> OrderItems { get; set; } = new();
 }

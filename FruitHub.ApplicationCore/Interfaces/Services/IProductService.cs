@@ -1,7 +1,7 @@
 using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.Models;
 
-namespace FruitHub.ApplicationCore.Interfaces;
+namespace FruitHub.ApplicationCore.Interfaces.Services;
 
 /*
  * TODO CREATE PRODUCT => Done
@@ -17,12 +17,15 @@ namespace FruitHub.ApplicationCore.Interfaces;
  */
 public interface IProductService
 {
-    Task<IReadOnlyList<Product>?> GetAllAsync();
-    Task<Product?> GetByIdAsync(int id);
-    Task<IReadOnlyList<Product>?> GetByCategoryAsync(int categoryId);
-    Task<IReadOnlyList<Product>?> SearchAsync(string search);
-    // Task<IReadOnlyList<Product>?> SortAsync(string searsh);
+    Task<IReadOnlyList<ProductResponseDto>> GetAllAsync(ProductQuery productQuery);
+    
+    Task<SingleProductResponseDto?> GetByIdAsync(int id);
+    
+    Task<IReadOnlyList<ProductResponseDto>> GetByCategoryAsync(int categoryId, ProductQuery productQuery);
+    
     Task CreateAsync(CreateProductDto dto, ImageDto imageDto);
+    
     Task UpdateAsync(UpdateProductDto dto, ImageDto? imageDto = null);
+    
     Task DeleteAsync(int id);
 }

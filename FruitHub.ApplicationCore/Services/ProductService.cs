@@ -1,6 +1,8 @@
 using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.Enums;
 using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Services;
+using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Models;
 
 namespace FruitHub.ApplicationCore.Services;
@@ -14,51 +16,29 @@ public class ProductService : IProductService
     public ProductService(IUnitOfWork uow, IImageService imageService)
     {
         _uow = uow;
-        _productRepo = uow.Products();
+        _productRepo = uow.Product;
         _imageService = imageService;
     }
     
-    public async Task<IReadOnlyList<Product>?> GetAllAsync(ProductSortBy sortBy, SortDirection sortDirection = SortDirection.Asc)
+    public async Task<IReadOnlyList<ProductResponseDto>> GetAllAsync(ProductQuery productQuery)
     {
-        var includeProperties = new string[] {"Category"};
+        var products = await _productRepo.GetProductsAsync(productQuery);
+        return products;
+    }
+
+    public async Task<SingleProductResponseDto?> GetByIdAsync(int id)
+    {
+        var product = await _productRepo.GetProductByIdWithCategoryAsync(id);
         
-        var products = await _productRepo.GetAllAsync(includeProperties);
-        
-        products = sortBy switch
-        {
-            ProductSortBy.Price =>
-                sortDirection == SortDirection.Asc
-                    ? products.OrderBy(p => p.Price)
-                    : products.OrderByDescending(p => p.Price),
-        };
-        return (IReadOnlyList<Product>?)products;
+        return product;
     }
 
-    public async Task<Product?> GetByIdAsync(int id)
+    public async Task<IReadOnlyList<ProductResponseDto>> GetByCategoryAsync(int categoryId, ProductQuery productQuery)
     {
-        var includeProperties = new string[] {"Category"};
-        
-        var categorie = await _productRepo.GetByIdAsync(id, includeProperties);
-        return categorie;
+        var products = await _productRepo.GetByCategoryAsync(categoryId, productQuery);
+        return products;
     }
-
-    public async Task<IReadOnlyList<Product>?> GetByCategoryAsync(int categoryId)
-    {
-        var categories = await _productRepo.GetByCategoryAsync(categoryId);
-        return (IReadOnlyList<Product>?)categories;
-    }
-
-    public async Task<IReadOnlyList<Product>?> SearchAsync(string search)
-    {
-        var includeProperties = new string[] {"Category"};
-
-        var products = await _productRepo.FindAsync(p =>
-                p.Name.Contains(search) || p.Description.Contains(search),
-            includeProperties);
-
-        return (IReadOnlyList<Product>?)products;
-    }
-
+    
     public async Task CreateAsync(CreateProductDto dto, ImageDto imageDto)
     {
         if (dto == null)
@@ -81,7 +61,7 @@ public class ProductService : IProductService
             AdminId = 1 // in this case i has only one admin
         };
         
-        _productRepo.Insert(product);
+        _productRepo.Add(product);
         await _uow.SaveChangesAsync();
     }
 
@@ -124,7 +104,7 @@ public class ProductService : IProductService
         
         await _imageService.DeleteAsync(product.ImagePath);
         
-        _productRepo.Delete(product);
+        _productRepo.Remove(product);
         await _uow.SaveChangesAsync();
     }
 }

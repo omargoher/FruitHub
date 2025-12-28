@@ -2,7 +2,7 @@ using FruitHub.ApplicationCore.DTOs.Auth.Register;
 using FruitHub.ApplicationCore.DTOs.Auth.Login;
 using FruitHub.ApplicationCore.DTOs.Auth.Refresh;
 
-namespace FruitHub.ApplicationCore.Interfaces;
+namespace FruitHub.ApplicationCore.Interfaces.Services;
 
 public interface IAuthService
 {

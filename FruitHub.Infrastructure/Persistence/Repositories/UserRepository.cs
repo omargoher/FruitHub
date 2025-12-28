@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FruitHub.Infrastructure.Persistence.Repositories;
 
-public class CategoryRepository : GenericRepository<Category, int>, ICategoryRepository
+public class UserRepository : GenericRepository<User, int>, IUserRepository
 {
-    public CategoryRepository(ApplicationDbContext context) :base(context)
+    public UserRepository(ApplicationDbContext context) :base(context)
     {
     }
 }
