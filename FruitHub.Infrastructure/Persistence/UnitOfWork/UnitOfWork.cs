@@ -15,10 +15,12 @@ public class UnitOfWork : IUnitOfWork
         User = new UserRepository(_context);
         Category = new CategoryRepository(_context);
         Product = new ProductRepository(_context);
+        UserFavorites = new UserFavoritesRepository(_context);
     }
     public IUserRepository User { get; private set; }
     public ICategoryRepository Category { get; private set; }
     public IProductRepository Product { get; private set; }
+    public IUserFavoritesRepository UserFavorites { get; private set; }
     
     public async Task<int> SaveChangesAsync()
     {

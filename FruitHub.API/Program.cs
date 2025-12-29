@@ -144,7 +144,8 @@ public class Program
 
         
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-       
+        
+        builder.Services.AddScoped<IUserFavoritesService, UserFavoritesService>();
         builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IAuthService, JwtAuthService>();
         builder.Services.AddScoped<ICategoryService, CategoryService>();

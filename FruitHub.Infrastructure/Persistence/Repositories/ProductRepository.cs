@@ -118,4 +118,9 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
         }).ToListAsync();
     }
  
+    public async Task<bool> CheckIfProductExist(int productId)
+    {
+        return await _context.Products
+            .AnyAsync(p => p.Id == productId);
+    }
 }

@@ -1,3 +1,4 @@
+using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.Enums;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Models;
@@ -14,10 +15,9 @@ public class UserRepository : GenericRepository<User, int>, IUserRepository
     {
     }
 
-    public async Task<User?> GetByIdentityUserIdAsync(string userId)
+    public async Task<User?> GetByIdentityUserIdAsync(string identityUserId)
     {
         return await _context.Users
-            .FirstOrDefaultAsync(u => u.UserId == userId);
+            .FirstOrDefaultAsync(u => u.UserId == identityUserId);
     }
-    
 }

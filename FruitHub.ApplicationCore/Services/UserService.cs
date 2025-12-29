@@ -1,7 +1,9 @@
+using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.DTOs.User;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Interfaces.Services;
+using FruitHub.ApplicationCore.Models;
 
 namespace FruitHub.ApplicationCore.Services;
 
@@ -16,9 +18,9 @@ public class UserService : IUserService
         _userRepo = uow.User;
     }
 
-    public async Task<UserProfileDto> GetUserAsync(string userId)
+    public async Task<UserProfileDto> GetUserAsync(string identityUserId)
     {
-        var user = await _userRepo.GetByIdentityUserIdAsync(userId);
+        var user = await _userRepo.GetByIdentityUserIdAsync(identityUserId);
         
         if (user == null)
         {
@@ -33,9 +35,9 @@ public class UserService : IUserService
         };
     }
 
-    public async Task UpdateUserAsync(string userId, UpdateUserDto dto)
+    public async Task UpdateUserAsync(string identityUserId, UpdateUserDto dto)
     {
-        var user = await _userRepo.GetByIdentityUserIdAsync(userId);
+        var user = await _userRepo.GetByIdentityUserIdAsync(identityUserId);
 
         if (user == null)
         {

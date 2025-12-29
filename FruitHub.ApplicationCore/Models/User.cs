@@ -9,6 +9,6 @@ public class User : IEntity<int>
     public string FullName {get; set;} = null!;
     public string Email {get; set;} = null!;
     public List<Order> Orders { get; set; } = new();
-    public List<Product> FavoriteList { get; set; } = new();
+    public List<UserFavorite> FavoriteList { get; set; } = new();
     public Cart Cart { get; set; } = null!;
 }
