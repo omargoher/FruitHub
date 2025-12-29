@@ -8,5 +8,5 @@ public class Cart : IEntity<int>
     public int UserId { get; set; } 
     public User User { get; set; } = null!;
     public List<CartItem> Items { get; set; } = new();
-    public decimal TotalPrice => Items.Sum(i => i.Quentity * i.Product.Price);
+    public decimal TotalPrice => Items.Sum(i => i.Quantity * i.Product.Price);
 }

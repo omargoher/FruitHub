@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FruitHub.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/favorite")]
 [Authorize]
 public class UserFavoritesController : ControllerBase
 {

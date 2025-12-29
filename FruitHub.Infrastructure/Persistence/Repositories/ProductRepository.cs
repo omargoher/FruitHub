@@ -42,7 +42,7 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
                 : query.OrderByDescending(p => p.Calories),
             
             ProductSortBy.MostSelling => 
-                query.OrderByDescending(p => p.OrderItems.Sum(oi => oi.Quentity)), 
+                query.OrderByDescending(p => p.OrderItems.Sum(oi => oi.Quantity)), 
             
             _ => query.OrderBy(p => p.Id)
         };

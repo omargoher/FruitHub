@@ -20,4 +20,12 @@ public class UserRepository : GenericRepository<User, int>, IUserRepository
         return await _context.Users
             .FirstOrDefaultAsync(u => u.UserId == identityUserId);
     }
+    
+    public async Task<User?> GetByIdentityUserIdWithCartAsync(string identityUserId)
+    {
+        return await _context.Users
+            .Include(u => u.Cart)
+            .ThenInclude(c => c.Items)
+            .FirstOrDefaultAsync(u => u.UserId == identityUserId);
+    }
 }

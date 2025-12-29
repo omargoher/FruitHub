@@ -12,7 +12,7 @@ public class CartItemEntityTypeConfiguration : IEntityTypeConfiguration<CartItem
         builder.Property(ci => ci.Id)
             .ValueGeneratedOnAdd();
 
-        builder.Property(ci => ci.Quentity)
+        builder.Property(ci => ci.Quantity)
             .IsRequired();
 
         builder.HasOne(ci => ci.Product)

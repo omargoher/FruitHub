@@ -12,7 +12,7 @@ public class OrderItemEntityTypeConfiguration : IEntityTypeConfiguration<OrderIt
         builder.Property(oi => oi.Id)
             .ValueGeneratedOnAdd();
 
-        builder.Property(oi => oi.Quentity)
+        builder.Property(oi => oi.Quantity)
             .IsRequired();
 
         builder.Property(oi => oi.PricePerPiece)
