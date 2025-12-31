@@ -16,10 +16,12 @@ public class UnitOfWork : IUnitOfWork
         Category = new CategoryRepository(_context);
         Product = new ProductRepository(_context);
         Cart = new CartRepository(_context);
+        Order = new OrderRepository(_context);
         UserFavorites = new UserFavoritesRepository(_context);
     }
     public IUserRepository User { get; private set; }
     public ICartRepository Cart { get; private set; }
+    public IOrderRepository Order { get; private set; }
     public ICategoryRepository Category { get; private set; }
     public IProductRepository Product { get; private set; }
     public IUserFavoritesRepository UserFavorites { get; private set; }

@@ -1,10 +1,10 @@
-using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Models;
 
-namespace FruitHub.ApplicationCore.Models;
+namespace FruitHub.ApplicationCore.DTOs.Order;
 
-public class Order : IEntity<int>
+public class OrderResponseDto
 {
-    public int Id { get; set; }
+    public int UserId { get; set; }
     public string CustomerFullName { get; set; } = null!;
     public string CustomerAddress { get; set; } = null!;
     public string CustomerCity { get; set; } = null!;
@@ -15,7 +15,5 @@ public class Order : IEntity<int>
     public decimal ShippingFees { get; set; }
     public bool IsShipped { get; set; }
     public bool IsPayed { get; set; }
-    public List<OrderItem> Items { get; set; } = new();
-    public int UserId { get; set; }
-    public User User { get; set; } = null!;
+    public IReadOnlyList<OrderItemResponseDto> Items { get; set; } = [];
 }

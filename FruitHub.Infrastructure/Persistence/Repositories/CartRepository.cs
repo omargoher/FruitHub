@@ -28,6 +28,13 @@ public class CartRepository : GenericRepository<Cart, int>, ICartRepository
             }).ToListAsync();
     }
     
+    public async Task<Cart?> GetWithCartItemsAndProductsAsync(int userId)
+    {
+        return await _context.Carts
+            .Include(c => c.Items)
+            .ThenInclude(ci => ci.Product)
+            .FirstOrDefaultAsync(c => c.UserId == userId);
+    }
     public async Task<CartItem?> GetItemAsync(int userId, int productId)
     {
         return await _context.CartItems
