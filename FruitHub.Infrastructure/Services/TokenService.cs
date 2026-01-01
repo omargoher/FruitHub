@@ -2,9 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using FruitHub.ApplicationCore.DTOs;
 using FruitHub.ApplicationCore.DTOs.Auth.Refresh;
-using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.Infrastructure.Identity;
 using FruitHub.Infrastructure.Interfaces;
@@ -69,7 +67,7 @@ public class TokenService : ITokenService
     public async Task<RefreshTokenDto> CreateRefreshTokenAsync(ApplicationUser user)
     {
         // Enforce single active session per user (security policy)
-        await RevokeAllAsync(user);
+        RevokeAllAsync(user);
         
         var token = GenerateRefreshToken();
 
@@ -90,17 +88,13 @@ public class TokenService : ITokenService
         return refreshToken;
     }
     
-    public async Task RevokeAllAsync(ApplicationUser user)
+    public void RevokeAllAsync(ApplicationUser user)
     {
         var activeTokens = user.RefreshTokens.Where(t => t.IsActive);
         foreach (var token in activeTokens)
         {
-            Console.WriteLine();
             token.RevokedAt = DateTime.UtcNow;
         }
-
-        // TODO Handel if realy need update or not
-        await _userManager.UpdateAsync(user);
     }
     
     private static string GenerateRefreshToken()

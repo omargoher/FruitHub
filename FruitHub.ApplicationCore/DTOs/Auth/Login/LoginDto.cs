@@ -8,6 +8,7 @@ public class LoginDto
     public string Email { get; set; } = null!;
     
     [Required]
+    [MaxLength(255)]
     [DataType(DataType.Password)]
     public string Password { get; set; } = null!;
 }

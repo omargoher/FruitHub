@@ -6,7 +6,7 @@ namespace FruitHub.ApplicationCore.Interfaces.Services;
 
 public interface IAuthService
 {
-    Task<RegisterResponseDto> RegisterAsync(RegisterDto dto);
+    Task RegisterAsync(RegisterDto dto);
     Task<LoginResponseDto> LoginAsync(LoginDto dtp);
     Task<LoginResponseDto> RefreshAsync(RefreshTokenRequestDto refreshToken);
     Task LogoutAsync(string userId);

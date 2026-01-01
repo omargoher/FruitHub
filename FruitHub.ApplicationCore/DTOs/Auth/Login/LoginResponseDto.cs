@@ -7,6 +7,4 @@ public class LoginResponseDto
     public string? RefreshToken { get; set; }
     public DateTime? TokenExpiresAt { get; set; }
     public DateTime? RefreshExpiresAt { get; set; }
-    public List<string> Errors { get; set; } = new();
-    public bool IsAuthenticated { get; set; }
 }

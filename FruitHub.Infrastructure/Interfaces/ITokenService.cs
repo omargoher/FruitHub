@@ -8,5 +8,5 @@ public interface ITokenService
 {
     Task<SecurityToken> GenerateJwtAsync(ApplicationUser user);
     Task<RefreshTokenDto> CreateRefreshTokenAsync(ApplicationUser user);
-    Task RevokeAllAsync(ApplicationUser user);
+    void RevokeAllAsync(ApplicationUser user);
 }

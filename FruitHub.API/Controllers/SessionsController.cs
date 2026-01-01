@@ -9,7 +9,7 @@ namespace FruitHub.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class SessionsController : Controller
+public class SessionsController : ControllerBase
 {
     private readonly IAuthService _authService;
 
@@ -23,23 +23,7 @@ public class SessionsController : Controller
     {
         var response = await _authService.LoginAsync(dto);
         
-        if (!response.IsAuthenticated)
-        {
-            //ProblemDetails
-            return BadRequest(
-                new
-                {
-                    Errors = response.Errors
-                });
-        }
-        
-        return Created(string.Empty, new {
-            response.Email,
-            response.Token,
-            response.TokenExpiresAt,
-            response.RefreshToken,
-            response.RefreshExpiresAt,
-        });
+        return Ok(response);
     }
     
     [HttpPost("refresh")]
@@ -47,22 +31,7 @@ public class SessionsController : Controller
     {
         var response = await _authService.RefreshAsync(refreshToken);
         
-        if (!response.IsAuthenticated)
-        {
-            return BadRequest(
-                new
-                {
-                    Errors = response.Errors
-                });
-        }
-        
-        return Ok(new {
-            response.Email,
-            response.Token,
-            response.TokenExpiresAt,
-            response.RefreshToken,
-            response.RefreshExpiresAt,
-        });
+        return Ok(response);
     }
     
     [Authorize]

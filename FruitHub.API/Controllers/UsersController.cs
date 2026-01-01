@@ -9,7 +9,7 @@ namespace FruitHub.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsersController : Controller
+public class UsersController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IUserService _userService;
@@ -23,22 +23,9 @@ public class UsersController : Controller
     [HttpPost]
     public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto dto)
     {
-
-        var response = await _authService.RegisterAsync(dto);
+        await _authService.RegisterAsync(dto);
         
-        if (!response.IsRegistered)
-        {
-            return BadRequest(
-                new
-                {
-                    Errors = response.Errors
-                });
-        }
-        
-        return Ok(new {
-            response.FullName,
-            response.Email,
-        });
+        return Created();
     }
 
     [Authorize]
