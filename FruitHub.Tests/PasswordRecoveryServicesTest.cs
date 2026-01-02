@@ -12,14 +12,14 @@ using Moq;
 
 namespace FruitHub.Tests;
 
-public class PasswordRecoveryServiceTest
+public class PasswordResetServiceTest
 {
     private readonly Mock<UserManager<ApplicationUser>> _userManager;
     private readonly Mock<IEmailService> _email;
     private readonly Mock<IAppCache> _cache;
     private readonly Mock<IOtpService> _otp;
     
-    public PasswordRecoveryServiceTest()
+    public PasswordResetServiceTest()
     {
         var userStore = new Mock<IUserStore<ApplicationUser>>();
 
@@ -33,9 +33,9 @@ public class PasswordRecoveryServiceTest
         _otp = new Mock<IOtpService>();
     }
     
-    private PasswordRecoveryService CreateSut()
+    private PasswordResetService CreateSut()
     {
-        return new PasswordRecoveryService(
+        return new PasswordResetService(
             _userManager.Object,
             _email.Object,
             _cache.Object,

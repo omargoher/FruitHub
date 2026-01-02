@@ -47,7 +47,7 @@ public class EmailConfirmationService : IEmailConfirmationService
         await _cache.SetAsync(
             cacheKey,
             cacheValue,
-            TimeSpan.FromMinutes(1)
+            TimeSpan.FromMinutes(10)
         );
         
         await _emailService.SendAsync(
@@ -89,10 +89,14 @@ public class EmailConfirmationService : IEmailConfirmationService
 
         var user = await _userManager.FindByEmailAsync(confirmEmailDto.Email);
         if (user is null)
+        {
             throw new NotFoundException("User not found");
-        
+        }
+
         if (user.EmailConfirmed)
+        {
             return;
+        }
         
         user.EmailConfirmed = true;
         var result = await _userManager.UpdateAsync(user);
