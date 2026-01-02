@@ -155,9 +155,12 @@ public class Program
         builder.Services.AddScoped<IImageService, ImageService>();
         
         builder.Services.AddScoped<ITokenService, TokenService>();
+        builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IOtpService, OtpService>();
         
-        // builder.Services.AddMemoryCache();
-        // builder.Services.AddSingleton<IAppCache, MemoryAppCache>();
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<IAppCache, MemoryAppCache>();
         
         var app = builder.Build();
         

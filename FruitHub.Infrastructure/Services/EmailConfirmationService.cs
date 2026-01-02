@@ -1,5 +1,6 @@
 using FruitHub.ApplicationCore.DTOs;
 using FruitHub.ApplicationCore.DTOs.Auth.EmailVerification;
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces.Services;
 using FruitHub.Infrastructure.Identity;
 using FruitHub.Infrastructure.Interfaces;
@@ -7,14 +8,14 @@ using Microsoft.AspNetCore.Identity;
 
 namespace FruitHub.Infrastructure.Services;
 
-public class EmailVerificationService : IEmailVerificationService
+public class EmailConfirmationService : IEmailConfirmationService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IEmailService _emailService;
     private readonly IAppCache _cache;
     private readonly IOtpService _otp;
     
-    public EmailVerificationService(
+    public EmailConfirmationService(
         UserManager<ApplicationUser> userManager,
         IEmailService emailService,
         IAppCache cache,
@@ -26,7 +27,7 @@ public class EmailVerificationService : IEmailVerificationService
         _otp = otp;
     }
     
-    public async Task SendConfirmationCodeAsync(SendEmailConfirmationCodeDto dto)
+    public async Task SendAsync(SendEmailConfirmationCodeDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
         
@@ -46,7 +47,7 @@ public class EmailVerificationService : IEmailVerificationService
         await _cache.SetAsync(
             cacheKey,
             cacheValue,
-            TimeSpan.FromMinutes(10)
+            TimeSpan.FromMinutes(1)
         );
         
         await _emailService.SendAsync(
@@ -56,48 +57,50 @@ public class EmailVerificationService : IEmailVerificationService
         );
     }
 
-    public async Task<ConfirmEmailResponseDto> ConfirmAsync(ConfirmEmailCodeDto confirmEmailDto)
+    // use exception to handele errors
+    public async Task ConfirmAsync(ConfirmEmailCodeDto confirmEmailDto)
     {
         ArgumentNullException.ThrowIfNull(confirmEmailDto);
-        var response = new ConfirmEmailResponseDto();
         
         var cacheKey = $"email-confirm:{confirmEmailDto.Email}";
         var cached = await _cache.GetAsync<EmailOtpCacheModel>(cacheKey);
 
-        if (cached == null)
+        if (cached is null)
         {
-            response.Errors.Add("OTP_EXPIRED");
-            return response;
+            throw new InvalidOtp("OTP Is Expired");
         }
 
         if (cached.AttemptsLeft <= 0)
         {
-            response.Errors.Add("OTP_LOCKED");
-            return response;
+            throw new InvalidOtp("OTP Is Locked");
         }
 
         if (cached.Otp != confirmEmailDto.Otp)
         {
             cached.AttemptsLeft--;
-            await _cache.SetAsync(cacheKey, cached, TimeSpan.FromMinutes(10));
-            response.Errors.Add("OTP_INVALID");
-            return response;
+
+            await _cache.SetAsync(
+                cacheKey,
+                cached,
+                TimeSpan.FromMinutes(10)
+            );
+            throw new InvalidOtp("OTP Is Invalid");
         }
 
         var user = await _userManager.FindByEmailAsync(confirmEmailDto.Email);
-
-        if (user == null)
-        {
-            response.Errors.Add("INVALID_REQUEST");
-            return response;
-        }
-
+        if (user is null)
+            throw new NotFoundException("User not found");
+        
+        if (user.EmailConfirmed)
+            return;
+        
         user.EmailConfirmed = true;
-        await _userManager.UpdateAsync(user);
+        var result = await _userManager.UpdateAsync(user);
 
+        if (!result.Succeeded)
+            throw new IdentityOperationException(result.Errors
+                .Select(e => e.Description));
+        
         await _cache.RemoveAsync(cacheKey);
-        response.IsConfirmed = true;
-
-        return response;
     }
 }

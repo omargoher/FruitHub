@@ -12,14 +12,14 @@ using Moq;
 
 namespace FruitHub.Tests;
 
-public class EmailVerificationServiceTest
+public class EmailConfirmationServiceTest
 {
     private readonly Mock<UserManager<ApplicationUser>> _userManager;
     private readonly Mock<IEmailService> _email;
     private readonly Mock<IAppCache> _cache;
     private readonly Mock<IOtpService> _otp;
     
-    public EmailVerificationServiceTest()
+    public EmailConfirmationServiceTest()
     {
         var userStore = new Mock<IUserStore<ApplicationUser>>();
 
@@ -33,9 +33,9 @@ public class EmailVerificationServiceTest
         _otp = new Mock<IOtpService>();
     }
     
-    private EmailVerificationService CreateSut()
+    private EmailConfirmationService CreateSut()
     {
-        return new EmailVerificationService(
+        return new EmailConfirmationService(
             _userManager.Object,
             _email.Object,
             _cache.Object,
