@@ -10,23 +10,22 @@ using FruitHub.Infrastructure.Identity;
 using FruitHub.Infrastructure.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace FruitHub.Infrastructure.Services;
 public class JwtAuthService : IAuthService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IUnitOfWork _uow;
+    private readonly IIdentityUserRepository _identityUserRepo;
     private readonly ITokenService _tokenService;
     public JwtAuthService(
-        UserManager<ApplicationUser> userManager,
         IUnitOfWork uow,
-        ITokenService tokenService
+        ITokenService tokenService,
+        IIdentityUserRepository identityUserRepo
         )
     {
-        _userManager = userManager;
         _uow = uow;
         _tokenService = tokenService;
+        _identityUserRepo = identityUserRepo;
     }
     
     public async Task RegisterAsync(RegisterDto registerDto)
@@ -42,17 +41,16 @@ public class JwtAuthService : IAuthService
                 UserName = registerDto.UserName,
                 Email = registerDto.Email
             };
+            
+            var identityResult = await _identityUserRepo.CreateAsync(identityUser, registerDto.Password);
            
-            var identityResult = await _userManager.CreateAsync(identityUser, registerDto.Password);
-
-
             if (!identityResult.Succeeded)
             {
                 throw new IdentityOperationException(
                     identityResult.Errors.Select(e => e.Description));
             }
 
-            identityResult = await _userManager.AddToRoleAsync(identityUser, "User");
+            identityResult = await _identityUserRepo.AddToRoleAsync(identityUser, "User");
 
             if (!identityResult.Succeeded)
             {
@@ -76,7 +74,7 @@ public class JwtAuthService : IAuthService
                 throw new RegistrationFailedException("Failed to create business user");
             }
 
-            identityResult = await _userManager.AddClaimAsync(identityUser, new Claim(
+            identityResult = await _identityUserRepo.AddClaimAsync(identityUser, new Claim(
                 "business_user_id",
                 businessUser.Id.ToString()
             ));
@@ -90,7 +88,7 @@ public class JwtAuthService : IAuthService
         catch
         {
             if (identityUser != null)
-                await _userManager.DeleteAsync(identityUser);
+                await _identityUserRepo.DeleteAsync(identityUser);
 
             throw;
         }
@@ -101,11 +99,9 @@ public class JwtAuthService : IAuthService
         ArgumentNullException.ThrowIfNull(loginDto);
         var response = new LoginResponseDto();
 
-        var user = await _userManager.Users
-            .Include(u => u.RefreshTokens)
-            .SingleOrDefaultAsync(u => u.Email == loginDto.Email);
+        var user = await _identityUserRepo.GetByEmailWithRefreshTokens(loginDto.Email);
 
-        if (user == null || !await _userManager.CheckPasswordAsync(user, loginDto.Password))
+        if (user == null || !await _identityUserRepo.CheckPasswordAsync(user, loginDto.Password))
         { 
             throw new InvalidCredentialsException();
         }
@@ -132,10 +128,8 @@ public class JwtAuthService : IAuthService
     {
         ArgumentNullException.ThrowIfNull(refreshToken);
         var response = new LoginResponseDto();
-        
-       var user = await _userManager.Users
-           .Include(u => u.RefreshTokens)
-           .FirstOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == refreshToken.RefreshToken));
+
+        var user = await _identityUserRepo.GetByRefreshTokenWithRefreshTokens(refreshToken.RefreshToken);
 
        if (user == null)
        {
@@ -143,9 +137,9 @@ public class JwtAuthService : IAuthService
        }
         
        var oldToken = user.RefreshTokens
-           .First(t => t.Token == refreshToken.RefreshToken);
+           .FirstOrDefault(t => t.Token == refreshToken.RefreshToken);
 
-       if (oldToken.IsExpired || oldToken.IsRevoked)
+       if (oldToken == null || oldToken.IsExpired || oldToken.IsRevoked)
        {
            throw new InvalidRefreshTokenException();
        }
@@ -166,15 +160,22 @@ public class JwtAuthService : IAuthService
     public async Task LogoutAsync(string identityUserId)
     {
         ArgumentNullException.ThrowIfNull(identityUserId);
-        var user = await _userManager.Users.Include(u => u.RefreshTokens)
-            .SingleOrDefaultAsync(u => u.Id == identityUserId);
+
+        var user = await _identityUserRepo.GetByIdWithRefreshTokens(identityUserId);
 
         if (user == null)
         {
             return;
         }
         _tokenService.RevokeAllAsync(user);
-        await _userManager.UpdateAsync(user);
+        
+        var identityResult = await _identityUserRepo.UpdateAsync(user);
+        
+        if (!identityResult.Succeeded)
+        {
+            throw new IdentityOperationException(
+                identityResult.Errors.Select(e => e.Description));
+        }
     }
    
     private static string MapRegistrationIdentityErrors(IEnumerable<IdentityError> errors)
