@@ -39,6 +39,11 @@ public class IdentityUserRepository : IIdentityUserRepository
         return await _userManager.AddClaimAsync(user, claim);
     }
 
+    public async Task<ApplicationUser?> GetByEmail(string email)
+    {
+        return await _userManager.FindByEmailAsync(email);
+    }
+    
     public async Task<ApplicationUser?> GetByEmailWithRefreshTokens(string email)
     {
         return await _userManager.Users

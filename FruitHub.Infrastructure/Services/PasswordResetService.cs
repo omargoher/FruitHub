@@ -10,113 +10,84 @@ namespace FruitHub.Infrastructure.Services;
 
 public class PasswordResetService : IPasswordResetService
 {
+    private const string ForgetPasswordKey = "forget-password";
+    private const string ForgetPasswordVerifyKey = "forget-password:verified";
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IEmailService _emailService;
-    private readonly IAppCache _cache;
     private readonly IOtpService _otp;
+    private readonly IAppCache _cache;
     
     public PasswordResetService(
         UserManager<ApplicationUser> userManager,
         IEmailService emailService,
-        IAppCache cache,
-        IOtpService otp)
+        IOtpService otp,
+        IAppCache cache
+        )
     {
         _userManager = userManager;
         _emailService = emailService;
-        _cache = cache;
         _otp = otp;
+        _cache = cache;
     }
 
-    // This the same method in EmailConfirmarion service (generalize it ?)
     public async Task CreateAsync(CreatePasswordResetRequestDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
         
         var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null || user.EmailConfirmed)
-            return;
-        
-        var otp = _otp.GenerateOtp();
-        var cacheKey = $"forget-password:{dto.Email}";
 
-        var cacheValue = new EmailOtpCacheModel
+        if (user == null)
         {
-            Otp = otp,
-            AttemptsLeft = 2
-        };
-
-        await _cache.SetAsync(
-            cacheKey,
-            cacheValue,
-            TimeSpan.FromMinutes(10)
-        );
+            return;
+        }
         
+        var key = $"{ForgetPasswordKey}:{dto.Email}";
+        
+        var otp = await _otp.CreateOtpAsync(key);
+
         await _emailService.SendAsync(
             user.Email,
             "Reset Password",
             $"This is Reset Password Code: <b>{otp}</b>"
         );
-        
     }
 
     public async Task<VerifyPasswordResetCodeResponseDto> VerifyAsync(VerifyPasswordResetCodeDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
-        var response = new VerifyPasswordResetCodeResponseDto();
         
-        var cacheKey = $"forget-password:{dto.Email}";
-        var cached = await _cache.GetAsync<EmailOtpCacheModel>(cacheKey);
-
-        if (cached == null)
-        {
-            throw new InvalidOtp("OTP Is Expired");
-        }
-
-        if (cached.AttemptsLeft <= 0)
-        {
-            throw new InvalidOtp("OTP Is Locked");
-        }
-
-        if (cached.Otp != dto.Otp)
-        {
-            cached.AttemptsLeft--;
-
-            await _cache.SetAsync(
-                cacheKey,
-                cached,
-                TimeSpan.FromMinutes(10)
-            );
-            throw new InvalidOtp("OTP Is Invalid");
-        }
-
         var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user is null)
+        if (user == null)
         {
+            // good return not found when user is null ?!
             throw new NotFoundException("User not found");
         }
         
+        var key = $"{ForgetPasswordKey}:{dto.Email}";
+        await _otp.VerifyOtpAsync(key, dto.Otp);
 
         var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-
+        
         await _cache.SetAsync(
-            $"forget-password:verified:{resetToken}",
+            $"{ForgetPasswordVerifyKey}:{resetToken}",
             dto.Email,
             TimeSpan.FromMinutes(10)
         );
 
-        await _cache.RemoveAsync(cacheKey);
+        await _otp.RemoveOtpAsync(key);
 
-        response.ResetToken = resetToken;
-        
-        return response;
+        return new VerifyPasswordResetCodeResponseDto
+        {
+            ResetToken = resetToken
+        };
     }
     
     public async Task ResetAsync(ResetPasswordDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
         
-        var cacheKey = $"forget-password:verified:{dto.ResetToken}";
-        var email = await _cache.GetAsync<string>(cacheKey);
+        var key = $"{ForgetPasswordVerifyKey}:{dto.ResetToken}";
+        var email = await _cache.GetAsync<string>(key);
 
         if (email == null)
         {
@@ -124,7 +95,7 @@ public class PasswordResetService : IPasswordResetService
         }
 
         var user = await _userManager.FindByEmailAsync(email);
-        if (user is null)
+        if (user == null)
         {
             throw new NotFoundException("User not found");
         }
@@ -140,7 +111,6 @@ public class PasswordResetService : IPasswordResetService
             throw new IdentityOperationException(result.Errors.Select(e => e.Description));
         }
 
-        await _cache.RemoveAsync(cacheKey);
+        await _cache.RemoveAsync(key);
     }
-
 }
