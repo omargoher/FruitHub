@@ -2,7 +2,7 @@ using FruitHub.ApplicationCore.Interfaces;
 
 namespace FruitHub.ApplicationCore.Models;
 
-public class Admin : IEntity<int>
+public class Admin : BaseEntity, IEntity<int>
 {
     public int Id {get; set;}
     public string UserId {get; set;}

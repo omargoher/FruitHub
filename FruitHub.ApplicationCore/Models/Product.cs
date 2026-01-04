@@ -2,7 +2,7 @@ using FruitHub.ApplicationCore.Interfaces;
 
 namespace FruitHub.ApplicationCore.Models;
 
-public class Product : IEntity<int>
+public class Product : BaseEntity, IEntity<int>
 {
     public int Id { get; set; }
     public string Name { get; set; } = null!;
