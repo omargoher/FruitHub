@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FruitHub.Infrastructure.Identity.Migrations
 {
     [DbContext(typeof(AppIdentityDbContext))]
-    [Migration("20251220073430_AddIdentityTables")]
+    [Migration("20260104002103_AddIdentityTables")]
     partial class AddIdentityTables
     {
         /// <inheritdoc />
