@@ -5,6 +5,7 @@ using FruitHub.ApplicationCore.Interfaces.Services;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.ApplicationCore.Services;
 using FruitHub.Infrastructure.Identity;
+using FruitHub.Infrastructure.Identity.Repositories;
 using FruitHub.Infrastructure.Interfaces;
 using FruitHub.Infrastructure.Persistence;
 using FruitHub.Infrastructure.Persistence.UnitOfWork;
@@ -159,14 +160,24 @@ public class Program
         builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IOtpService, OtpService>();
+        builder.Services.AddScoped<IIdentityUserRepository, IdentityUserRepository>();
         
         builder.Services.AddMemoryCache();
         builder.Services.AddSingleton<IAppCache, MemoryAppCache>();
         
         var app = builder.Build();
         
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            RoleSeeder.SeedRolesAsync(services)
+                .GetAwaiter()
+                .GetResult();
+            IdentitySeeder.SeedAdminAsync(services)
+                .GetAwaiter()
+                .GetResult();
+        }
         
-        // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();

@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using FruitHub.ApplicationCore.DTOs.Category;
 using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FruitHub.API.Controllers;
@@ -49,23 +50,25 @@ public class CategoriesController : ControllerBase
         return Ok(products);
     }
     
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> CreateAsync([FromBody]CreateCategoryDto dto)
     {
-        await _categoryService.CreateAsync(dto.Name);
+        await _categoryService.CreateAsync(dto);
         
         return Created();
     }
     
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateAsync([FromRoute]int id, [FromBody]UpdateCategoryDto dto)
     {
-        dto.Id = id;
-        await _categoryService.UpdateAsync(dto);
+        await _categoryService.UpdateAsync(id, dto);
         
         return NoContent();
     }
     
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteAsync([FromRoute] int id)
     {

@@ -6,7 +6,7 @@ namespace FruitHub.ApplicationCore.Interfaces.Services;
 public interface ICategoryService
 {
     Task<IReadOnlyList<Category>> GetAllAsync();
-    Task CreateAsync(string name);
-    Task UpdateAsync(UpdateCategoryDto dto);
+    Task CreateAsync(CreateCategoryDto dto);
+    Task UpdateAsync(int id, UpdateCategoryDto dto);
     Task DeleteAsync(int id);
 }

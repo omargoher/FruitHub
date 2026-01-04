@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using FruitHub.ApplicationCore.DTOs.Category;
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Services;
 using FruitHub.ApplicationCore.Interfaces.Repository;
@@ -17,12 +18,7 @@ public class CategoryService : ICategoryService
         _uow = uow;
         _categoryRepo = uow.Category;
     }
-
-    /*
-     * I use IReadOnlyList becuase
-     * 1. is aleady list not query .. it is executed
-     * 2. not use List<> becuase not anyone modify it
-     */
+    
     public async Task<IReadOnlyList<Category>> GetAllAsync()
     {
         var categories = await _categoryRepo.GetAllAsync();
@@ -30,30 +26,32 @@ public class CategoryService : ICategoryService
         return categories;
     }
     
-    public async Task CreateAsync(string name)
+    public async Task CreateAsync(CreateCategoryDto dto)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Category name is required");
-        
-        var category = new Category
+        if (dto == null)
         {
-            Name = name 
-        };
-        
-        _categoryRepo.Add(category);
+            throw new InvalidRequestException("Category DTO is required");
+        }
+
+        _categoryRepo.Add(new Category
+        {
+            Name = dto.Name
+        });
         await _uow.SaveChangesAsync();
     }
     
-    public async Task UpdateAsync(UpdateCategoryDto dto)
+    public async Task UpdateAsync(int id, UpdateCategoryDto dto)
     {
         if (dto == null)
-            throw new ArgumentException("Category name is required");
-        
-        var category = await _categoryRepo.GetByIdAsync(dto.Id);
+        {
+            throw new InvalidRequestException("Category DTO is required");
+        }
+
+        var category = await _categoryRepo.GetByIdAsync(id);
         
         if (category == null)
         {
-            throw new KeyNotFoundException("Category not found");
+            throw new NotFoundException("Category not found");
         }
         
         category.Name = dto.Name;
@@ -68,7 +66,7 @@ public class CategoryService : ICategoryService
         
         if (category == null)
         {
-            throw new KeyNotFoundException("Category not found");
+            throw new NotFoundException("Category not found");
         }
         
         _categoryRepo.Remove(category);
