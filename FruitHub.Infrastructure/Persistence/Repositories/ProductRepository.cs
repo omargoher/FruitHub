@@ -12,34 +12,40 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
     public ProductRepository(ApplicationDbContext context) :base(context)
     {
     }
-
-    private IQueryable<Product> ApplyProductQuery(IQueryable<Product> query, ProductQuery productQuery)
+    
+    private IQueryable<Product> ApplySearching(IQueryable<Product> query, string search)
     {
-        if (!string.IsNullOrWhiteSpace(productQuery.Search))
-        {
-            var search = productQuery.Search.Trim().ToLower();
-            query = query.Where(p =>
-                p.Name.ToLower().Contains(search) ||
-                p.Description.ToLower().Contains(search));
-        }
+        search = search.Trim().ToLower();
+        query = query.Where(p =>
+            p.Name.ToLower().Contains(search) ||
+            p.Description.ToLower().Contains(search));
 
-        query = productQuery.SortBy switch
+        return query;
+    }
+
+    private IQueryable<Product> ApplySorting(IQueryable<Product> query, ProductSortBy sortBy, SortDirection sortDir)
+    {
+        query = sortBy switch
         {
-            ProductSortBy.Name => (productQuery.SortDir == SortDirection.Asc)
+            ProductSortBy.Name => (sortDir == SortDirection.Asc)
                 ? query.OrderBy(p => p.Name)
                 : query.OrderByDescending(p => p.Name),
 
-            ProductSortBy.Price => (productQuery.SortDir == SortDirection.Asc)
+            ProductSortBy.Price => (sortDir == SortDirection.Asc)
                 ? query.OrderBy(p => p.Price)
                 : query.OrderByDescending(p => p.Price),
 
-            ProductSortBy.ExpirationPeriod => (productQuery.SortDir == SortDirection.Asc)
+            ProductSortBy.ExpirationPeriod => (sortDir == SortDirection.Asc)
                 ? query.OrderBy(p => p.ExpirationPeriodByDays)
                 : query.OrderByDescending(p => p.ExpirationPeriodByDays),
             
-            ProductSortBy.Calories => (productQuery.SortDir == SortDirection.Asc)
+            ProductSortBy.Calories => (sortDir == SortDirection.Asc)
                 ? query.OrderBy(p => p.Calories)
                 : query.OrderByDescending(p => p.Calories),
+            
+            ProductSortBy.CreatedAt => (sortDir == SortDirection.Asc)
+                ? query.OrderBy(p => p.CreatedAt)
+                : query.OrderByDescending(p => p.CreatedAt),
             
             ProductSortBy.MostSelling => 
                 query.OrderByDescending(p => p.OrderItems.Sum(oi => oi.Quantity)), 
@@ -47,22 +53,33 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
             _ => query.OrderBy(p => p.Id)
         };
 
-        if (productQuery.Offset.HasValue)
+        return query;
+    }
+
+    private IQueryable<Product> ApplyPagination(IQueryable<Product> query, int? offset, int? limit)
+    {
+        if(offset.HasValue) query = query.Skip(offset.Value);
+        if(limit.HasValue) query = query.Take(limit.Value);
+        return query;
+    }
+
+    private IQueryable<Product> ApplyProductQuery(IQueryable<Product> query, ProductQuery productQuery)
+    {
+        if (!string.IsNullOrWhiteSpace(productQuery.Search))
         {
-            query = query.Skip(productQuery.Offset.Value);
+            query = ApplySearching(query, productQuery.Search);
         }
-        
-        if (productQuery.Limit.HasValue)
-        {
-            query = query.Take(productQuery.Limit.Value);
-        }
+
+        if (productQuery.SortBy != null) query = ApplySorting(query, productQuery.SortBy.Value, productQuery.SortDir);
+
+        query = ApplyPagination(query, productQuery.Offset, productQuery.Limit);
 
         return query;
     }
     
-    public async Task<IReadOnlyList<ProductResponseDto>> GetProductsAsync(ProductQuery productQuery)
+    public async Task<IReadOnlyList<ProductResponseDto>> GetAllAsync(ProductQuery productQuery)
     {
-        // i am not need send categories with response so not include it in queries 
+        // i am not need send categories with response so not include it in queries
         IQueryable<Product> query = _context.Products
             .AsNoTracking();
 
@@ -77,10 +94,9 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
         }).ToListAsync();
     }
 
-    public async Task<SingleProductResponseDto?> GetProductByIdWithCategoryAsync(int id)
+    public async Task<SingleProductResponseDto?> GetByIdWithCategoryNameAsync(int productId)
     {
         var product = await _context.Products
-            .Include(p => p.Category)
             .Select(p => new SingleProductResponseDto 
             {
                 Id = p.Id,
@@ -94,12 +110,11 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
                 ImagePath = p.ImagePath,
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category.Name,
-                
-            }).SingleOrDefaultAsync(p => p.Id == id);
+            }).SingleOrDefaultAsync(p => p.Id == productId);
         return product;
     }
     
-    public async Task<IReadOnlyList<ProductResponseDto>> GetByCategoryAsync(int categoryId, ProductQuery productQuery)
+    public async Task<IReadOnlyList<ProductResponseDto>> GetByCategoryIdAsync(int categoryId, ProductQuery productQuery)
     {
         IQueryable<Product> query = _context.Products
             .AsNoTracking();

@@ -23,9 +23,9 @@ public interface IProductService
     
     Task<IReadOnlyList<ProductResponseDto>> GetByCategoryAsync(int categoryId, ProductQuery productQuery);
     
-    Task CreateAsync(CreateProductDto dto, ImageDto imageDto);
+    Task CreateAsync(int adminId, CreateProductDto dto, ImageDto imageDto);
     
-    Task UpdateAsync(UpdateProductDto dto, ImageDto? imageDto = null);
+    Task UpdateAsync(int id, UpdateProductDto dto, ImageDto? imageDto = null);
     
     Task DeleteAsync(int id);
 }

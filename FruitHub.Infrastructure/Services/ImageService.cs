@@ -1,3 +1,4 @@
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.ApplicationCore.Interfaces.Services;
 
@@ -17,7 +18,7 @@ public class ImageService : IImageService
         string contentType)
     {
         if (!contentType.StartsWith("image/"))
-            throw new InvalidOperationException("Invalid image type");
+            throw new InvalidRequestException("Invalid image type");
 
         var extension = Path.GetExtension(fileName);
         var newName = $"{Guid.NewGuid()}{extension}";

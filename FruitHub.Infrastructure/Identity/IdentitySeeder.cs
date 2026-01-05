@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using FruitHub.ApplicationCore.Models;
 using FruitHub.Infrastructure.Persistence;
 
@@ -50,14 +51,21 @@ public static class IdentitySeeder
 
         if (!adminExists)
         {
-            dbContext.Add(new Admin
+            var admin = new Admin
             {
                 UserId = user.Id,
                 Email = adminEmail,
                 FullName = adminFullName,
-            });
+            };
+            
+            dbContext.Add(admin);
 
             await dbContext.SaveChangesAsync();
+            
+            await userManager.AddClaimAsync(user, new Claim(
+                "business_admin_id",
+                admin.Id.ToString()
+            ));
         }
     }
 }

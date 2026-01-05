@@ -13,6 +13,7 @@ public class UnitOfWork : IUnitOfWork
     {
         _context = context;
         User = new UserRepository(_context);
+        Admin = new AdminRepository(_context);
         Category = new CategoryRepository(_context);
         Product = new ProductRepository(_context);
         Cart = new CartRepository(_context);
@@ -20,6 +21,7 @@ public class UnitOfWork : IUnitOfWork
         UserFavorites = new UserFavoritesRepository(_context);
     }
     public IUserRepository User { get; private set; }
+    public IAdminRepository Admin { get; private set; }
     public ICartRepository Cart { get; private set; }
     public IOrderRepository Order { get; private set; }
     public ICategoryRepository Category { get; private set; }

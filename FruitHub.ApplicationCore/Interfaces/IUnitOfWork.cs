@@ -10,5 +10,6 @@ public interface IUnitOfWork : IDisposable
     IUserFavoritesRepository UserFavorites { get;}
     ICartRepository Cart { get;}
     IOrderRepository Order { get;}
+    IAdminRepository Admin { get;}
     Task<int> SaveChangesAsync();
 }

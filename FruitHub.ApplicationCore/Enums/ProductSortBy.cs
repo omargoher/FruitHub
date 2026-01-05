@@ -6,5 +6,6 @@ public enum ProductSortBy
     Price,
     MostSelling,
     ExpirationPeriod,
-    Calories
+    Calories,
+    CreatedAt
 }

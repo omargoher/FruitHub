@@ -1,5 +1,6 @@
 using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.Enums;
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Services;
 using FruitHub.ApplicationCore.Interfaces.Repository;
@@ -22,30 +23,45 @@ public class ProductService : IProductService
     
     public async Task<IReadOnlyList<ProductResponseDto>> GetAllAsync(ProductQuery productQuery)
     {
-        var products = await _productRepo.GetProductsAsync(productQuery);
+        var products = await _productRepo.GetAllAsync(productQuery);
         return products;
     }
 
-    public async Task<SingleProductResponseDto?> GetByIdAsync(int id)
+    public async Task<SingleProductResponseDto?> GetByIdAsync(int productId)
     {
-        var product = await _productRepo.GetProductByIdWithCategoryAsync(id);
-        
+        var product = await _productRepo.GetByIdWithCategoryNameAsync(productId);
         return product;
     }
 
     public async Task<IReadOnlyList<ProductResponseDto>> GetByCategoryAsync(int categoryId, ProductQuery productQuery)
     {
-        var products = await _productRepo.GetByCategoryAsync(categoryId, productQuery);
+        var products = await _productRepo.GetByCategoryIdAsync(categoryId, productQuery);
         return products;
     }
     
-    public async Task CreateAsync(CreateProductDto dto, ImageDto imageDto)
+    public async Task CreateAsync(int adminId, CreateProductDto dto, ImageDto imageDto)
     {
+        var admin = await _uow.Admin.GetByIdAsync(adminId);
+        if (admin == null)
+        {
+            throw new InvalidRequestException("Admin id not valid");
+        }
+        
         if (dto == null)
-            throw new ArgumentException("Product Data is required");
+        {
+            throw new InvalidRequestException("Product Data is required");
+        }
+
+        var category = _uow.Category.GetByIdAsync(dto.CategoryId);
+        if (category == null)
+        {
+            throw new InvalidRequestException("Category id not valid");
+        }
         
         if (imageDto == null)
-            throw new ArgumentException("Image is required");
+        {
+            throw new InvalidRequestException("Image is required");
+        }
         
         var imagePath = await _imageService
             .SaveAsync(imageDto.Content, imageDto.FileName, imageDto.ContentType);
@@ -61,19 +77,19 @@ public class ProductService : IProductService
             ImagePath = imagePath,
             Stock = dto.Stock,
             CategoryId = dto.CategoryId,
-            AdminId = 1 // in this case i has only one admin
+            AdminId = adminId
         };
         
         _productRepo.Add(product);
         await _uow.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(UpdateProductDto dto, ImageDto? imageDto = null)
+    public async Task UpdateAsync(int productId, UpdateProductDto dto, ImageDto? imageDto = null)
     {
-        var product = await _productRepo.GetByIdAsync(dto.Id);
+        var product = await _productRepo.GetByIdAsync(productId);
         
         if (product == null)
-            throw new KeyNotFoundException("Product not found");
+            throw new NotFoundException("Product not found");
 
         string oldImagePath = product.ImagePath;
         
@@ -81,6 +97,16 @@ public class ProductService : IProductService
         {
             product.ImagePath = await _imageService.SaveAsync(imageDto.Content, imageDto.FileName, imageDto.ContentType);
         }
+
+        if (dto.CategoryId.HasValue)
+        {
+            var category = _uow.Category.GetByIdAsync(dto.CategoryId.Value);
+            if (category == null)
+            {
+                throw new InvalidRequestException("Category id not valid");
+            }
+        }
+        
         product.Name = dto.Name ?? product.Name;
         product.Price = dto.Price ?? product.Price;
         product.Calories = dto.Calories ?? product.Calories;
@@ -88,7 +114,7 @@ public class ProductService : IProductService
         product.Organic = dto.Organic ?? product.Organic;
         product.ExpirationPeriodByDays = dto.ExpirationPeriodByDays ?? product.ExpirationPeriodByDays;
         product.Stock = dto.Stock ?? product.Stock;
-        product.CategoryId = dto.CategoryId ?? product.CategoryId ;
+        product.CategoryId = dto.CategoryId ?? product.CategoryId;
         
         _productRepo.Update(product);
         await _uow.SaveChangesAsync();
@@ -99,11 +125,11 @@ public class ProductService : IProductService
         }
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task DeleteAsync(int productId)
     {
-        var product = await _productRepo.GetByIdAsync(id);
+        var product = await _productRepo.GetByIdAsync(productId);
         if (product == null)
-            throw new KeyNotFoundException("Product not found");
+            throw new NotFoundException("Product not found");
         
         await _imageService.DeleteAsync(product.ImagePath);
         

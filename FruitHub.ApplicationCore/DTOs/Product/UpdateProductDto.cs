@@ -4,8 +4,6 @@ namespace FruitHub.ApplicationCore.DTOs.Product;
 
 public class UpdateProductDto
 {
-    public int Id { get; set; }
-    
     [StringLength(100, MinimumLength = 3)]
     public string? Name { get; set; }
     
