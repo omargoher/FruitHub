@@ -10,5 +10,11 @@ public class CategoryRepository : GenericRepository<Category, int>, ICategoryRep
 {
     public CategoryRepository(ApplicationDbContext context) :base(context)
     {
+        
+    }
+    public async Task<bool> IsNameExistAsync(string categoryName)
+    {
+        return await _context.Categories
+            .AnyAsync(c => c.Name == categoryName);
     }
 }

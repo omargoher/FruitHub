@@ -19,39 +19,66 @@ public class CategoryService : ICategoryService
         _categoryRepo = uow.Category;
     }
     
-    public async Task<IReadOnlyList<Category>> GetAllAsync()
+    public async Task<IReadOnlyList<CategoryResponseDto>> GetAllAsync()
     {
         var categories = await _categoryRepo.GetAllAsync();
         
-        return categories;
+        return categories.Select(c => new CategoryResponseDto
+        {
+            Id = c.Id,
+            Name = c.Name
+        }).ToList();
     }
     
-    public async Task CreateAsync(CreateCategoryDto dto)
+    public async Task<CategoryResponseDto> GetByIdAsync(int categoryId)
     {
-        if (dto == null)
+        var category = await _categoryRepo.GetByIdAsync(categoryId);
+
+        if (category == null)
         {
-            throw new InvalidRequestException("Category DTO is required");
+            throw new NotFoundException($"Category with id {categoryId} not found");
+        }
+        return new CategoryResponseDto
+        {
+            Id = category.Id,
+            Name = category.Name
+        };
+    }
+    
+    public async Task<CategoryResponseDto> CreateAsync(CategoryDto dto)
+    {
+        if (await _categoryRepo.IsNameExistAsync(dto.Name))
+        {
+            throw new ConflictException($"Category with name {dto.Name} already exists");
         }
 
-        _categoryRepo.Add(new Category
+        var category = new Category
         {
             Name = dto.Name
-        });
+        };
+        
+        _categoryRepo.Add(category);
         await _uow.SaveChangesAsync();
+
+        return new CategoryResponseDto
+        {
+            Id = category.Id,
+            Name = category.Name
+        };
     }
     
-    public async Task UpdateAsync(int id, UpdateCategoryDto dto)
+    public async Task UpdateAsync(int categoryId, CategoryDto dto)
     {
-        if (dto == null)
+        if (await _categoryRepo.IsNameExistAsync(dto.Name))
         {
-            throw new InvalidRequestException("Category DTO is required");
+            throw new ConflictException($"Category with name {dto.Name} already exists");
         }
-
-        var category = await _categoryRepo.GetByIdAsync(id);
+        
+        var category = await _categoryRepo.GetByIdAsync(categoryId);
         
         if (category == null)
         {
-            throw new NotFoundException("Category not found");
+            throw new NotFoundException($"Category with id {categoryId} not found");
         }
         
         category.Name = dto.Name;
@@ -60,13 +87,13 @@ public class CategoryService : ICategoryService
         await _uow.SaveChangesAsync();
     }
     
-    public async Task DeleteAsync(int id)
+    public async Task DeleteAsync(int categoryId)
     {
-        var category = await _categoryRepo.GetByIdAsync(id);
+        var category = await _categoryRepo.GetByIdAsync(categoryId);
         
         if (category == null)
         {
-            throw new NotFoundException("Category not found");
+            throw new NotFoundException($"Category with id {categoryId} not found");
         }
         
         _categoryRepo.Remove(category);

@@ -23,56 +23,58 @@ public class CategoriesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllAsync()
     {
-        var categories = await _categoryService.GetAllAsync();
+        var categories = await _categoryService
+            .GetAllAsync();
 
-        if (!categories.Any())
-        {
-            return NoContent();
-        }
-        
-        return Ok(categories.Select(c => new
-        {
-            c.Id,
-            c.Name
-        }));
+        return Ok(categories);
     }
     
-    [HttpGet("{id:int}/products")]
-    public async Task<IActionResult> GetProductsAsync(int id, [FromQuery]ProductQuery productQuery)
+    [HttpGet("{categoryId:int}")]
+    public async Task<IActionResult> GetByIdAsync(int categoryId)
     {
-        var products = await _productService.GetByCategoryAsync(id, productQuery);
-        
-        if (!products.Any())
-        {
-            return NoContent();
-        }
-        
+        var category = await _categoryService
+            .GetByIdAsync(categoryId);
+
+        return Ok(category);
+    }
+    
+    [HttpGet("{categoryId:int}/products")]
+    public async Task<IActionResult> GetProductsAsync(int categoryId, [FromQuery]ProductQuery productQuery)
+    {
+        var products = await _productService
+            .GetByCategoryAsync(categoryId, productQuery);
+       
         return Ok(products);
     }
     
     [Authorize(Roles = "Admin")]
     [HttpPost]
-    public async Task<IActionResult> CreateAsync([FromBody]CreateCategoryDto dto)
+    public async Task<IActionResult> CreateAsync([FromBody]CategoryDto dto)
     {
-        await _categoryService.CreateAsync(dto);
-        
-        return Created();
+        var category = await _categoryService.CreateAsync(dto);
+
+        return CreatedAtAction(
+            "GetById",
+            new { categoryId = category.Id },
+            category);
     }
     
     [Authorize(Roles = "Admin")]
-    [HttpPut("{id:int}")]
-    public async Task<IActionResult> UpdateAsync([FromRoute]int id, [FromBody]UpdateCategoryDto dto)
+    [HttpPut("{categoryId:int}")]
+    public async Task<IActionResult> UpdateAsync(
+        [FromRoute]int categoryId, 
+        [FromBody]CategoryDto dto)
     {
-        await _categoryService.UpdateAsync(id, dto);
+        await _categoryService.UpdateAsync(categoryId, dto);
         
         return NoContent();
     }
     
     [Authorize(Roles = "Admin")]
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> DeleteAsync([FromRoute] int id)
+    [HttpDelete("{categoryId:int}")]
+    public async Task<IActionResult> DeleteAsync([FromRoute] int categoryId)
     {
-        await _categoryService.DeleteAsync(id);
+        await _categoryService.DeleteAsync(categoryId);
         
         return NoContent();
     }

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FruitHub.ApplicationCore.DTOs.Category;
 
-public class UpdateCategoryDto
+public class CategoryDto
 {
     [Required]
     [StringLength(100, MinimumLength = 3)]
