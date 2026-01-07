@@ -1,5 +1,6 @@
 using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.DTOs.User;
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Interfaces.Services;
@@ -18,13 +19,13 @@ public class UserService : IUserService
         _userRepo = uow.User;
     }
 
-    public async Task<UserProfileDto> GetUserAsync(string identityUserId)
+    public async Task<UserProfileDto> GetByIdAsync(int userId)
     {
-        var user = await _userRepo.GetByIdentityUserIdAsync(identityUserId);
+        var user = await _userRepo.GetByIdAsync(userId);
         
         if (user == null)
         {
-            throw new KeyNotFoundException();
+            throw new NotFoundException($"User with id {userId} not found");
         }
         
         return new UserProfileDto
@@ -35,13 +36,13 @@ public class UserService : IUserService
         };
     }
 
-    public async Task UpdateUserAsync(string identityUserId, UpdateUserDto dto)
+    public async Task UpdateAsync(int userId, UpdateUserDto dto)
     {
-        var user = await _userRepo.GetByIdentityUserIdAsync(identityUserId);
+        var user = await _userRepo.GetByIdAsync(userId);
 
         if (user == null)
         {
-            throw new KeyNotFoundException();
+            throw new NotFoundException($"User with id {userId} not found");
         }
         
         user.FullName = dto.FullName ?? user.FullName;

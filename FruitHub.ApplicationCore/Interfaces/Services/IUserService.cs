@@ -6,7 +6,7 @@ namespace FruitHub.ApplicationCore.Interfaces.Services;
 
 public interface IUserService
 {
-    Task<UserProfileDto> GetUserAsync(string identityUserId);
-    Task UpdateUserAsync(string identityUserId, UpdateUserDto dto);
+    Task<UserProfileDto> GetByIdAsync(int userId);
+    Task UpdateAsync(int userId, UpdateUserDto dto);
 
 }

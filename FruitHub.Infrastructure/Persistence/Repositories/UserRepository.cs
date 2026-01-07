@@ -14,18 +14,12 @@ public class UserRepository : GenericRepository<User, int>, IUserRepository
     public UserRepository(ApplicationDbContext context) :base(context)
     {
     }
-
-    public async Task<User?> GetByIdentityUserIdAsync(string identityUserId)
-    {
-        return await _context.Users
-            .FirstOrDefaultAsync(u => u.UserId == identityUserId);
-    }
-    
-    public async Task<User?> GetByIdentityUserIdWithCartAsync(string identityUserId)
+  
+    public async Task<User?> GetByIdWithCartAsync(int userId)
     {
         return await _context.Users
             .Include(u => u.Cart)
             .ThenInclude(c => c.Items)
-            .FirstOrDefaultAsync(u => u.UserId == identityUserId);
+            .FirstOrDefaultAsync(u => u.Id == userId);
     }
 }

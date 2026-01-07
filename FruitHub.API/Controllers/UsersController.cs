@@ -23,37 +23,35 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto dto)
     {
-        await _authService.RegisterAsync(dto);
+        var user = await _authService.RegisterAsync(dto);
         
-        return Created();
+        return CreatedAtAction("GetById", user);
     }
 
-    [Authorize]
+    [Authorize(Roles = "User")]
     [HttpGet("me")]
-    public async Task<IActionResult> GetUserAsync()
+    public async Task<IActionResult> GetByIdAsync()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        var userId = GetUserId();
         
-        var userProfile = await _userService.GetUserAsync(userId);
+        var userProfile = await _userService.GetByIdAsync(userId);
         
         return Ok(userProfile);
     }
 
-    [Authorize]
+    [Authorize(Roles = "User")]
     [HttpPatch("me")]
-    public async Task<IActionResult> UpdateUserAsync([FromBody] UpdateUserDto dto)
+    public async Task<IActionResult> UpdateAsync([FromBody] UpdateUserDto dto)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
-
-        await _userService.UpdateUserAsync(userId, dto);
+        var userId = GetUserId();
+        
+        await _userService.UpdateAsync(userId, dto);
         return NoContent();
+    }
+    
+    private int GetUserId()
+    {
+        var value = User.FindFirstValue("business_user_id");
+        return value == null ? throw new UnauthorizedAccessException() : int.Parse(value);
     }
 }
