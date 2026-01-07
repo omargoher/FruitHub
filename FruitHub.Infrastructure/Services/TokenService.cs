@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using FruitHub.ApplicationCore.DTOs.Auth.Refresh;
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.Infrastructure.Identity;
 using FruitHub.Infrastructure.Interfaces;
@@ -16,20 +17,26 @@ public class TokenService : ITokenService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly JwtOptions _jwt;
+    private readonly RefreshTokenOptions _rToken;
     
     public TokenService(
         UserManager<ApplicationUser> userManager,
-        IOptions<JwtOptions> options)
+        IOptions<JwtOptions> jwtOptions,
+        IOptions<RefreshTokenOptions> rOptions)
     {
         _userManager = userManager;
-        _jwt = options.Value;
+        _jwt = jwtOptions.Value;
+        _rToken = rOptions.Value;
     }
 
     public async Task<SecurityToken> GenerateJwtAsync(ApplicationUser user)
     {
         // Create user claims
-        var userClaims = await _userManager.GetClaimsAsync(user) ?? new List<Claim>();
-        var userRoles = await _userManager.GetRolesAsync(user) ?? new List<string>();
+        var userClaims = await _userManager
+            .GetClaimsAsync(user);
+        
+        var userRoles = await _userManager
+            .GetRolesAsync(user);
         
         foreach (var role in userRoles)
         {
@@ -64,28 +71,44 @@ public class TokenService : ITokenService
         return securityToken;
     }
 
-    public async Task<RefreshTokenDto> CreateRefreshTokenAsync(ApplicationUser user)
+    public async Task<RefreshTokenDto> CreateRefreshTokenAsync(ApplicationUser user, string? refreshToken = null)
     {
-        // Enforce single active session per user (security policy)
-        RevokeAllAsync(user);
+        // Check if token is valid and Revoke It
+        if (refreshToken != null)
+        {
+            var oldToken = user.RefreshTokens
+                .FirstOrDefault(t => t.Token == refreshToken);
+
+            if (oldToken == null || oldToken.IsExpired || oldToken.IsRevoked)
+            {
+                throw new InvalidRefreshTokenException();
+            }
+            oldToken.RevokedAt = DateTime.UtcNow;
+        }
         
         var token = GenerateRefreshToken();
 
-        var refreshToken = new RefreshTokenDto()
+        var newRefreshToken = new RefreshTokenDto()
         {
             Token = token,
-            ExpiresAt = DateTime.UtcNow.AddDays(14),
+            ExpiresAt = DateTime.UtcNow.AddDays(_rToken.Lifetime),
         };
         
         user.RefreshTokens.Add(new RefreshToken
         {
             Token = token,
             CreatedAt = DateTime.UtcNow,
-            ExpiresAt = refreshToken.ExpiresAt
+            ExpiresAt = newRefreshToken.ExpiresAt
         });
-        await _userManager.UpdateAsync(user);
-
-        return refreshToken;
+        
+        var identityResult = await _userManager.UpdateAsync(user);
+        if (!identityResult.Succeeded)
+        {
+            throw new IdentityOperationException(
+                identityResult.Errors.Select(e => e.Description));
+        }
+        
+        return newRefreshToken;
     }
     
     public void RevokeAllAsync(ApplicationUser user)

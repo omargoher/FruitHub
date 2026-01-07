@@ -9,7 +9,6 @@ using FruitHub.ApplicationCore.Models;
 using FruitHub.Infrastructure.Identity;
 using FruitHub.Infrastructure.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Services;
-using Microsoft.AspNetCore.Identity;
 
 namespace FruitHub.Infrastructure.Services;
 public class JwtAuthService : IAuthService
@@ -28,14 +27,13 @@ public class JwtAuthService : IAuthService
         _identityUserRepo = identityUserRepo;
     }
     
-    public async Task RegisterAsync(RegisterDto registerDto)
+    public async Task<User> RegisterAsync(RegisterDto registerDto)
     {
-        ArgumentNullException.ThrowIfNull(registerDto);
-        
         ApplicationUser? identityUser = null;
         
         try
         {
+            // 1. Identity creation
             identityUser = new ApplicationUser
             {
                 UserName = registerDto.UserName,
@@ -50,6 +48,7 @@ public class JwtAuthService : IAuthService
                     identityResult.Errors.Select(e => e.Description));
             }
 
+            // 2. Role assignment
             identityResult = await _identityUserRepo.AddToRoleAsync(identityUser, "User");
 
             if (!identityResult.Succeeded)
@@ -58,6 +57,7 @@ public class JwtAuthService : IAuthService
                     identityResult.Errors.Select(e => e.Description));
             }
             
+            // 3. Business user creation
             var businessUser = new User
             {
                 UserId = identityUser.Id,
@@ -71,19 +71,21 @@ public class JwtAuthService : IAuthService
             
             if (saved == 0)
             {
-                throw new RegistrationFailedException("Failed to create business user");
+                throw new RegistrationFailedException("Failed to create user");
             }
 
+            // 4. Claims linking
             identityResult = await _identityUserRepo.AddClaimAsync(identityUser, new Claim(
                 "business_user_id",
                 businessUser.Id.ToString()
             ));
-            
             if (!identityResult.Succeeded)
             {
                 throw new IdentityOperationException(
                     identityResult.Errors.Select(e => e.Description));
             }
+
+            return businessUser;
         }
         catch
         {
@@ -96,10 +98,9 @@ public class JwtAuthService : IAuthService
 
     public async Task<LoginResponseDto> LoginAsync(LoginDto loginDto)
     {
-        ArgumentNullException.ThrowIfNull(loginDto);
         var response = new LoginResponseDto();
 
-        var user = await _identityUserRepo.GetByEmailWithRefreshTokens(loginDto.Email);
+        var user = await _identityUserRepo.GetByEmail(loginDto.Email);
 
         if (user == null || !await _identityUserRepo.CheckPasswordAsync(user, loginDto.Password))
         { 
@@ -126,7 +127,6 @@ public class JwtAuthService : IAuthService
 
     public async Task<LoginResponseDto> RefreshAsync(RefreshTokenRequestDto refreshToken)
     {
-        ArgumentNullException.ThrowIfNull(refreshToken);
         var response = new LoginResponseDto();
 
         var user = await _identityUserRepo.GetByRefreshTokenWithRefreshTokens(refreshToken.RefreshToken);
@@ -136,17 +136,9 @@ public class JwtAuthService : IAuthService
            throw new InvalidRefreshTokenException();
        }
         
-       var oldToken = user.RefreshTokens
-           .FirstOrDefault(t => t.Token == refreshToken.RefreshToken);
+       var newRefreshToken = await _tokenService.CreateRefreshTokenAsync(user, refreshToken.RefreshToken);
 
-       if (oldToken == null || oldToken.IsExpired || oldToken.IsRevoked)
-       {
-           throw new InvalidRefreshTokenException();
-       }
-       
        var jwtToken = await _tokenService.GenerateJwtAsync(user);
-
-       var newRefreshToken = await _tokenService.CreateRefreshTokenAsync(user);
 
        response.Email = user.Email;
        response.Token = new JwtSecurityTokenHandler().WriteToken(jwtToken);
@@ -159,8 +151,6 @@ public class JwtAuthService : IAuthService
 
     public async Task LogoutAsync(string identityUserId)
     {
-        ArgumentNullException.ThrowIfNull(identityUserId);
-
         var user = await _identityUserRepo.GetByIdWithRefreshTokens(identityUserId);
 
         if (user == null)
@@ -169,31 +159,6 @@ public class JwtAuthService : IAuthService
         }
         _tokenService.RevokeAllAsync(user);
         
-        var identityResult = await _identityUserRepo.UpdateAsync(user);
-        
-        if (!identityResult.Succeeded)
-        {
-            throw new IdentityOperationException(
-                identityResult.Errors.Select(e => e.Description));
-        }
-    }
-   
-    private static string MapRegistrationIdentityErrors(IEnumerable<IdentityError> errors)
-    {
-        var result="";
-
-        foreach (var error in errors)
-        {
-            if (error.Code.Contains("Password"))
-                result=error.Description;
-            else if (error.Code.Contains("DuplicateUserName"))
-                result="Username already exists";
-            else if (error.Code.Contains("DuplicateEmail"))
-                result="Email already exists";
-            else
-                result="Registration failed";
-        }
-
-        return result;
+        await _identityUserRepo.UpdateAsync(user);
     }
 }
