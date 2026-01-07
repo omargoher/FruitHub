@@ -1,50 +1,81 @@
+using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.Exceptions;
-using FruitHub.ApplicationCore.Options;
 using FruitHub.ApplicationCore.Interfaces.Services;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace FruitHub.Infrastructure.Services;
 public class ImageService : IImageService
 {
-    private readonly ImageStorageOptions _options;
 
-    public ImageService(ImageStorageOptions options)
+    public ImageService()
     {
-        _options = options;
     }
 
-    public async Task<string> SaveAsync(
-        Stream content,
-        string fileName,
-        string contentType)
+    public Task<string> ResolveImageAsync(string folder, string fileName)
     {
-        if (!contentType.StartsWith("image/"))
-            throw new InvalidRequestException("Invalid image type");
+        if (string.IsNullOrWhiteSpace(folder) || string.IsNullOrWhiteSpace(fileName))
+            throw new InvalidRequestException("Invalid request");
 
-        var extension = Path.GetExtension(fileName);
-        var newName = $"{Guid.NewGuid()}{extension}";
+        if (folder.Contains("..") || fileName.Contains(".."))
+            throw new InvalidRequestException("Invalid request");
 
-        var fullPath = Path.Combine(_options.RootPath, newName);
-        Directory.CreateDirectory(_options.RootPath);
+        var root = Directory.GetCurrentDirectory();
+        var path = Path.Combine(root, "storage", folder, fileName);
 
-        using var fs = new FileStream(fullPath, FileMode.Create);
-        await content.CopyToAsync(fs);
+        if (!File.Exists(path))
+            throw new NotFoundException($"Image with this url images/{folder}/{fileName} not found");
 
-        return $"{_options.PublicBasePath}/{newName}";
+        return Task.FromResult(path);
     }
-
-    public Task DeleteAsync(string imagePath)
+    
+    public async Task<string> SaveAsync(ImageDto image, string folder)
     {
-        if (string.IsNullOrWhiteSpace(imagePath))
+        using var img = Image.Load(image.Content);
+        // resize image with the original aspect ratio and the height or width not exceeds 800
+        img.Mutate(x => x.Resize(new ResizeOptions
+        {
+            Size = new Size (800, 800),
+            Mode = ResizeMode.Max,
+        }));
+        
+        var fileName = $"{Guid.NewGuid():N}.webp";
+        var path = Path.Combine("storage", folder, fileName);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+        using var fs = File.Create(path);
+        await img.SaveAsWebpAsync(fs);
+
+        return $"/images/{folder}/{fileName}";
+    }
+    
+    // Delete file is fast operation so not has File.DeleteAsync()
+    // So this method not Async
+    // But i name it with this becuse implement the IImageInterface and another cases Delete will be Async
+    public Task DeleteAsync(string imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
             return Task.CompletedTask;
 
-        // imagePath example: /images/8f3a2c.jpg
-        var fileName = Path.GetFileName(imagePath);
+        // imageUrl: /images/products/abc.webp
+        // we want: storage/products/abc.webp
+        var relativePath = imageUrl
+            .Replace("/images/", string.Empty)
+            .TrimStart('/');
 
-        var fullPath = Path.Combine(_options.RootPath, fileName);
+        if (relativePath.Contains(".."))
+            throw new InvalidRequestException("Invalid image path");
+        
+        var physicalPath = Path.Combine(
+            Directory.GetCurrentDirectory(),
+            "storage",
+            relativePath
+        );
 
-        if (File.Exists(fullPath))
+        if (File.Exists(physicalPath))
         {
-            File.Delete(fullPath);
+            File.Delete(physicalPath);
         }
 
         return Task.CompletedTask;
