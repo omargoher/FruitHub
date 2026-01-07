@@ -4,7 +4,7 @@ namespace FruitHub.ApplicationCore.Interfaces.Services;
 
 public interface IUserFavoritesService
 {
-    Task<IReadOnlyList<ProductResponseDto>> GetAsync(string identityUserId);
-    Task AddAsync(string identityUserId, int productId);
-    Task RemoveAsync(string identityUserId, int productId);
+    Task<IReadOnlyList<ProductResponseDto>> GetAllAsync(int userId);
+    Task AddAsync(int userId, int productId);
+    Task RemoveAsync(int userId, int productId);
 }

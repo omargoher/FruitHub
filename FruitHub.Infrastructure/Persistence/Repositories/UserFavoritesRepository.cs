@@ -1,39 +1,35 @@
 using FruitHub.ApplicationCore.DTOs.Product;
-using FruitHub.ApplicationCore.Enums;
-using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Models;
 using FruitHub.ApplicationCore.Interfaces.Repository;
-using FruitHub.Infrastructure.Identity;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace FruitHub.Infrastructure.Persistence.Repositories;
 
 public class UserFavoritesRepository : IUserFavoritesRepository
 {
-    protected readonly ApplicationDbContext _context;
+    private readonly ApplicationDbContext _context;
 
     public UserFavoritesRepository(ApplicationDbContext context)
     {
         _context = context;
     }
     
-    public async Task<IReadOnlyList<ProductResponseDto>> GetUserFavoriteListAsync(string identityUserId)
+    public async Task<IReadOnlyList<ProductResponseDto>> GetByUserIdAsync(int userId)
     {
         return await _context.UserFavorites
-            .Where(uf => uf.User.UserId == identityUserId)
+            .Where(uf => uf.UserId == userId)
             .Select(
                 uf => new ProductResponseDto
                 {
                     Id = uf.ProductId,
                     Name = uf.Product.Name,
                     Price = uf.Product.Price,
-                    ImagePath = uf.Product.ImagePath
+                    ImageUrl = uf.Product.ImageUrl
                 })
             .ToListAsync();
     }
 
-    public async Task<bool> CheckIfProductExist(int userId, int productId)
+    public async Task<bool> IsExistAsync(int userId, int productId)
     {
         return await _context.UserFavorites
             .AnyAsync(uf =>

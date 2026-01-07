@@ -1,9 +1,8 @@
 using FruitHub.ApplicationCore.DTOs.Product;
-using FruitHub.ApplicationCore.DTOs.User;
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Interfaces.Services;
-using FruitHub.ApplicationCore.Models;
 
 namespace FruitHub.ApplicationCore.Services;
 
@@ -22,56 +21,42 @@ public class UserFavoritesService : IUserFavoritesService
         _productRepo = uow.Product;
     }
 
-    public async Task<IReadOnlyList<ProductResponseDto>> GetAsync(string identityUserId)
+    public async Task<IReadOnlyList<ProductResponseDto>> GetAllAsync(int userId)
     {
-        var products = await _userFavoritesRepo.GetUserFavoriteListAsync(identityUserId);
-        
+        var products = await _userFavoritesRepo
+            .GetByUserIdAsync(userId);
         return products;
     }
 
-    public async Task AddAsync(string identityUserId, int productId)
+    public async Task AddAsync(int userId, int productId)
     {
-        var user = await _userRepo.GetByIdentityUserIdAsync(identityUserId);
-
-        if (user == null)
+        if (!await _userRepo.IsExistAsync(userId))
         {
-            throw new KeyNotFoundException("User not found");
+            throw new NotFoundException($"User with id {userId} not found");
         }
         
-        if (!await _productRepo.CheckIfProductExist(productId))
+        if (!await _productRepo.IsExistAsync(productId))
         {
-            throw new KeyNotFoundException("Product not found");
+            throw new NotFoundException($"Product with id {productId} not found");
         }
         
-        if (await _userFavoritesRepo.CheckIfProductExist(user.Id, productId))
+        if (await _userFavoritesRepo.IsExistAsync(userId, productId))
         {
             return;
         }
 
-        _userFavoritesRepo.Add(user.Id, productId);
+        _userFavoritesRepo.Add(userId, productId);
         await _uow.SaveChangesAsync();
     }
     
-    public async Task RemoveAsync(string identityUserId, int productId)
+    public async Task RemoveAsync(int userId, int productId)
     {
-        var user = await _userRepo.GetByIdentityUserIdAsync(identityUserId);
-
-        if (user == null)
-        {
-            throw new KeyNotFoundException("User not found");
-        }
-
-        if (!await _productRepo.CheckIfProductExist(productId))
-        {
-            throw new KeyNotFoundException("Product not found");
-        }
-        
-        if (!await _userFavoritesRepo.CheckIfProductExist(user.Id, productId))
+        if (!await _userFavoritesRepo.IsExistAsync(userId, productId))
         {
             return;
         }
         
-        _userFavoritesRepo.Remove(user.Id, productId);
+        _userFavoritesRepo.Remove(userId, productId);
         await _uow.SaveChangesAsync();
     }
 }

@@ -1,16 +1,13 @@
 using System.Security.Claims;
-using FruitHub.ApplicationCore.DTOs.Auth.Register;
-using FruitHub.ApplicationCore.DTOs.User;
 using FruitHub.ApplicationCore.Interfaces.Services;
-using FruitHub.ApplicationCore.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FruitHub.API.Controllers;
 
 [ApiController]
-[Route("api/favorite")]
-[Authorize]
+[Route("api/favorites")]
+[Authorize(Roles = "User")]
 public class UserFavoritesController : ControllerBase
 {
     private readonly IUserFavoritesService _userFavoritesService;
@@ -21,20 +18,12 @@ public class UserFavoritesController : ControllerBase
     }
     
     [HttpGet]
-    public async Task<IActionResult> GetAsync()
+    public async Task<IActionResult> GetAllAsync()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        var userId = GetUserId();
     
-        var favoriteProducts = await _userFavoritesService.GetAsync(userId);
-    
-        if (!favoriteProducts.Any())
-        {
-            return NoContent();
-        }
+        var favoriteProducts = await _userFavoritesService
+            .GetAllAsync(userId);
         
         return Ok(favoriteProducts);
     }
@@ -42,11 +31,7 @@ public class UserFavoritesController : ControllerBase
     [HttpPost("{productId:int}")]
     public async Task<IActionResult> AddProductAsync(int productId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        var userId = GetUserId();
     
         await _userFavoritesService.AddAsync(userId, productId);
         
@@ -56,14 +41,16 @@ public class UserFavoritesController : ControllerBase
     [HttpDelete("{productId:int}")]
     public async Task<IActionResult> RemoveProductAsync(int productId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        var userId = GetUserId();
     
         await _userFavoritesService.RemoveAsync(userId, productId);
         
         return NoContent();
+    }
+    
+    private int GetUserId()
+    {
+        var value = User.FindFirstValue("business_user_id");
+        return value == null ? throw new UnauthorizedAccessException() : int.Parse(value);
     }
 }
