@@ -11,7 +11,7 @@ public class Product : BaseEntity, IEntity<int>
     public string Description { get; set; } = null!;
     public bool Organic { get; set; }
     public int ExpirationPeriodByDays { get; set; }
-    public string ImagePath { get; set; } = null!;
+    public string ImageUrl { get; set; } = null!;
     public int Stock { get; set; }
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;

@@ -9,6 +9,4 @@ public interface IProductRepository : IGenericRepository<Product, int>
     Task<IReadOnlyList<ProductResponseDto>> GetAllAsync(ProductQuery productQuery);
     Task<SingleProductResponseDto?> GetByIdWithCategoryNameAsync(int productId);
     Task<IReadOnlyList<ProductResponseDto>> GetByCategoryIdAsync(int categoryId, ProductQuery productQuery);
-    Task<bool> CheckIfProductExist(int productId);
-    
 }

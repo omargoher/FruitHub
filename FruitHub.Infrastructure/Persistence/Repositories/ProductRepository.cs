@@ -90,7 +90,7 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
             Id = p.Id,
             Name = p.Name,
             Price = p.Price,
-            ImagePath = p.ImagePath
+            ImageUrl = p.ImageUrl
         }).ToListAsync();
     }
 
@@ -107,7 +107,7 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
                 Organic = p.Organic,
                 ExpirationPeriodByDays = p.ExpirationPeriodByDays,
                 Stock = p.Stock,
-                ImagePath = p.ImagePath,
+                ImageUrl = p.ImageUrl,
                 CategoryId = p.CategoryId,
                 CategoryName = p.Category.Name,
             }).SingleOrDefaultAsync(p => p.Id == productId);
@@ -129,13 +129,7 @@ public class ProductRepository : GenericRepository<Product, int>, IProductReposi
             Id = p.Id,
             Name = p.Name,
             Price = p.Price,
-            ImagePath = p.ImagePath
+            ImageUrl = p.ImageUrl
         }).ToListAsync();
-    }
- 
-    public async Task<bool> CheckIfProductExist(int productId)
-    {
-        return await _context.Products
-            .AnyAsync(p => p.Id == productId);
     }
 }

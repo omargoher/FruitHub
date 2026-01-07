@@ -29,11 +29,6 @@ public class ProductsController : ControllerBase
     {
         var products = await _productService.GetAllAsync(query);
 
-        if (!products.Any())
-        {
-            return NoContent();
-        }
-        
         return Ok(products);
     }
 
@@ -42,16 +37,11 @@ public class ProductsController : ControllerBase
     {
         var product = await _productService.GetByIdAsync(productId);
         
-        if (product == null)
-        {
-            return NoContent();
-        }
-        
         return Ok(product);
     }
     
-    [Authorize(Roles = "Admin")]
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> CreateAsync([FromForm]CreateProductDto dto, [FromForm]IFormFile image)
     {
@@ -64,17 +54,18 @@ public class ProductsController : ControllerBase
         var imageDto = new ImageDto
         {
             Content = image.OpenReadStream(),
-            FileName = image.FileName,
+            Length = image.Length,
             ContentType = image.ContentType
         };
+        
         
         await _productService.CreateAsync(int.Parse(adminId), dto, imageDto);
         
         return Created();
     }
     
-    [Authorize(Roles = "Admin")]
     [HttpPatch("{productId:int}")]
+    [Authorize(Roles = "Admin")]
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> UpdateAsync(
         [FromRoute]int productId, 
@@ -88,7 +79,7 @@ public class ProductsController : ControllerBase
             imageDto = new ImageDto
             {
                 Content = image.OpenReadStream(),
-                FileName = image.FileName,
+                Length = image.Length,
                 ContentType = image.ContentType
             };
         }

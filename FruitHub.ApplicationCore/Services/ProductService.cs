@@ -1,5 +1,4 @@
 using FruitHub.ApplicationCore.DTOs.Product;
-using FruitHub.ApplicationCore.Enums;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Services;
@@ -13,12 +12,14 @@ public class ProductService : IProductService
     private readonly IUnitOfWork _uow;
     private readonly IProductRepository _productRepo;
     private readonly IImageService _imageService;
+    private readonly IImageValidator _imageValidator;
 
-    public ProductService(IUnitOfWork uow, IImageService imageService)
+    public ProductService(IUnitOfWork uow, IImageService imageService, IImageValidator imageValidator)
     {
         _uow = uow;
         _productRepo = uow.Product;
         _imageService = imageService;
+        _imageValidator = imageValidator;
     }
     
     public async Task<IReadOnlyList<ProductResponseDto>> GetAllAsync(ProductQuery productQuery)
@@ -30,41 +31,44 @@ public class ProductService : IProductService
     public async Task<SingleProductResponseDto?> GetByIdAsync(int productId)
     {
         var product = await _productRepo.GetByIdWithCategoryNameAsync(productId);
+
+        if (product == null)
+        {
+            throw new NotFoundException($"Product with id {productId} not found");
+        }
+        
         return product;
     }
 
     public async Task<IReadOnlyList<ProductResponseDto>> GetByCategoryAsync(int categoryId, ProductQuery productQuery)
     {
+        if (!await _uow.Category.IsExistAsync(categoryId))
+        {
+            throw new NotFoundException($"Category with id {categoryId} not found");
+        }
+        
         var products = await _productRepo.GetByCategoryIdAsync(categoryId, productQuery);
         return products;
     }
     
-    public async Task CreateAsync(int adminId, CreateProductDto dto, ImageDto imageDto)
+    public async Task CreateAsync(int adminId, CreateProductDto dto, ImageDto image)
     {
         var admin = await _uow.Admin.GetByIdAsync(adminId);
         if (admin == null)
         {
-            throw new InvalidRequestException("Admin id not valid");
+            throw new NotFoundException($"Admin with id {adminId} not found");
         }
         
-        if (dto == null)
-        {
-            throw new InvalidRequestException("Product Data is required");
-        }
-
-        var category = _uow.Category.GetByIdAsync(dto.CategoryId);
+        var category = await _uow.Category.GetByIdAsync(dto.CategoryId);
         if (category == null)
         {
-            throw new InvalidRequestException("Category id not valid");
+            throw new NotFoundException($"Category with id {dto.CategoryId} not found");
         }
+
+        _imageValidator.Validate(image);
         
-        if (imageDto == null)
-        {
-            throw new InvalidRequestException("Image is required");
-        }
-        
-        var imagePath = await _imageService
-            .SaveAsync(imageDto.Content, imageDto.FileName, imageDto.ContentType);
+        var imageUrl = await _imageService
+            .SaveAsync(image, "products");
 
         var product = new Product
         {
@@ -74,8 +78,8 @@ public class ProductService : IProductService
             Description = dto.Description,
             Organic = dto.Organic,
             ExpirationPeriodByDays = dto.ExpirationPeriodByDays,
-            ImagePath = imagePath,
             Stock = dto.Stock,
+            ImageUrl = imageUrl,
             CategoryId = dto.CategoryId,
             AdminId = adminId
         };
@@ -84,27 +88,36 @@ public class ProductService : IProductService
         await _uow.SaveChangesAsync();
     }
 
-    public async Task UpdateAsync(int productId, UpdateProductDto dto, ImageDto? imageDto = null)
+    public async Task UpdateAsync(int productId, UpdateProductDto dto, ImageDto? image = null)
     {
+        if (dto == null && image == null)
+        {
+            return;
+        }
         var product = await _productRepo.GetByIdAsync(productId);
         
         if (product == null)
-            throw new NotFoundException("Product not found");
+            throw new NotFoundException($"Product with id {productId} not found");
 
-        string oldImagePath = product.ImagePath;
+        string oldImage = product.ImageUrl;
         
-        if (imageDto != null)
+        if (image != null)
         {
-            product.ImagePath = await _imageService.SaveAsync(imageDto.Content, imageDto.FileName, imageDto.ContentType);
+            _imageValidator.Validate(image);
+
+           product.ImageUrl = await _imageService
+                .SaveAsync(image, "products");
         }
 
         if (dto.CategoryId.HasValue)
         {
-            var category = _uow.Category.GetByIdAsync(dto.CategoryId.Value);
+            var category = await _uow.Category.GetByIdAsync(dto.CategoryId.Value);
             if (category == null)
             {
-                throw new InvalidRequestException("Category id not valid");
+                throw new NotFoundException($"Category with id {dto.CategoryId.Value} not found");
             }
+
+            product.CategoryId = dto.CategoryId.Value;
         }
         
         product.Name = dto.Name ?? product.Name;
@@ -114,24 +127,24 @@ public class ProductService : IProductService
         product.Organic = dto.Organic ?? product.Organic;
         product.ExpirationPeriodByDays = dto.ExpirationPeriodByDays ?? product.ExpirationPeriodByDays;
         product.Stock = dto.Stock ?? product.Stock;
-        product.CategoryId = dto.CategoryId ?? product.CategoryId;
         
         _productRepo.Update(product);
-        await _uow.SaveChangesAsync();
 
-        if (oldImagePath != product.ImagePath)
+        if (oldImage != product.ImageUrl)
         {
-            await _imageService.DeleteAsync(oldImagePath);
+            await _imageService.DeleteAsync(oldImage);
         }
+       
+        await _uow.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(int productId)
     {
         var product = await _productRepo.GetByIdAsync(productId);
         if (product == null)
-            throw new NotFoundException("Product not found");
+            throw new NotFoundException($"Product with id {productId} not foun");
         
-        await _imageService.DeleteAsync(product.ImagePath);
+        await _imageService.DeleteAsync(product.ImageUrl);
         
         _productRepo.Remove(product);
         await _uow.SaveChangesAsync();

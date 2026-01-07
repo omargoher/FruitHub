@@ -13,7 +13,7 @@ public class CreateProductDto
     public decimal Price { get; set; }
     
     [Required]
-    [Range(0.01, double.MaxValue)]
+    [Range(1, int.MaxValue)]
     public int Calories { get; set; }
     
     [Required]

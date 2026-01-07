@@ -10,7 +10,7 @@ public class UpdateProductDto
     [Range(0.01, double.MaxValue)]
     public decimal? Price { get; set; }
     
-    [Range(0.01, double.MaxValue)]
+    [Range(1, int.MaxValue)]
     public int? Calories { get; set; }
     
     [StringLength(500, MinimumLength = 10)]
