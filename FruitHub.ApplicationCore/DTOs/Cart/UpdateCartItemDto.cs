@@ -2,9 +2,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FruitHub.ApplicationCore.DTOs.Cart;
 
-public class CartDto
+public class UpdateCartItemDto
 {
     [Required]
-    [Range(0, int.MaxValue)]
+    [Range(1, int.MaxValue)]
     public int Quantity { get; set; }
 }

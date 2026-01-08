@@ -2,7 +2,7 @@ using FruitHub.ApplicationCore.Enums;
 
 namespace FruitHub.ApplicationCore.DTOs.Order;
 
-public class OrderFilter
+public class OrderFilterDto
 {
     public OrderStatus? Status { get; set; }
 

@@ -11,7 +11,7 @@ public class OrderQuery
     [Range(0, int.MaxValue)]
     public int? Offset { get; set; }
     
-    public OrderFilter? Filter { get; set; }
+    public OrderFilterDto? Filter { get; set; }
 
     [EnumDataType(typeof(ProductSortBy))]
     public OrderSortBy? SortBy { get; set; }

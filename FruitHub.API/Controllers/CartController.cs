@@ -32,7 +32,7 @@ public class CartController : ControllerBase
     }
 
     [HttpPost("{productId:int}")]
-    public async Task<IActionResult> AddItemAsync(int productId, [FromBody] CartDto dto)
+    public async Task<IActionResult> AddItemAsync(int productId, [FromBody] AddToCartDto dto)
     {
         var userId = ClaimsPrincipalExtensions.GetUserId(User);
 
@@ -42,7 +42,7 @@ public class CartController : ControllerBase
     }
 
     [HttpPut("{productId:int}")]
-    public async Task<IActionResult> UpdateQuantityAsync(int productId, [FromBody] CartDto dto)
+    public async Task<IActionResult> UpdateQuantityAsync(int productId, [FromBody] UpdateCartItemDto dto)
     {
         var userId = ClaimsPrincipalExtensions.GetUserId(User);
 

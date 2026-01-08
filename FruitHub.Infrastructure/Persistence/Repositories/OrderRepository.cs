@@ -12,7 +12,7 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
     {
     }
 
-    private IQueryable<Order> ApplyFilters(IQueryable<Order> query, OrderFilter filter)
+    private IQueryable<Order> ApplyFilters(IQueryable<Order> query, OrderFilterDto filter)
     {
         if (filter.Status.HasValue)
         {
