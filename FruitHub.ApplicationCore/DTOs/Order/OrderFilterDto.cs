@@ -1,4 +1,5 @@
 using FruitHub.ApplicationCore.Enums;
+using FruitHub.ApplicationCore.Enums.Order;
 
 namespace FruitHub.ApplicationCore.DTOs.Order;
 

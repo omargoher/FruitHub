@@ -83,6 +83,7 @@ public class JwtAuthService : IAuthService
             ));
             if (!identityResult.Succeeded)
             {
+                // delete business user ??
                 throw new IdentityOperationException(
                     identityResult.Errors.Select(e => e.Description));
             }
