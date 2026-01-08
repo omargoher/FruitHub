@@ -30,6 +30,11 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
         return await _context.Set<T>().Where(filter).ToListAsync();
     }
 
+    public async Task<bool> IsExistAsync(TKey id)
+    {
+        return await _context.Set<T>()
+            .AnyAsync(t => t.Id!.Equals(id));
+    }
     public void Add(T entity)
     {
         _context.Set<T>().Add(entity);

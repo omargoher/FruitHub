@@ -12,6 +12,7 @@ public interface IGenericRepository<T, TKey> where T : class
 
     Task<IReadOnlyList<T>> FindAsync(Expression<Func<T, bool>> filter);
 
+    Task<bool> IsExistAsync(TKey id);
     void Add(T entity);
     
     void Update(T entity);

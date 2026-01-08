@@ -15,6 +15,7 @@ public class Order : BaseEntity, IEntity<int>
     public decimal ShippingFees { get; set; }
     public bool IsShipped { get; set; }
     public bool IsPayed { get; set; }
+    public bool IsCanceled { get; set; }
     public List<OrderItem> Items { get; set; } = new();
     public int UserId { get; set; }
     public User User { get; set; } = null!;

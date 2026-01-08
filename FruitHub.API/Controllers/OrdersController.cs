@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using FruitHub.ApplicationCore.DTOs.Cart;
 using FruitHub.ApplicationCore.DTOs.Order;
 using FruitHub.ApplicationCore.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -21,76 +20,84 @@ public class OrdersController : ControllerBase
     }
     
     [HttpGet]
-    public async Task<IActionResult> GetAllOrdersAsync([FromQuery] OrderQuery query)
+    public async Task<IActionResult> GetAllAsync([FromQuery] OrderQuery query)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var role = User.FindFirstValue(ClaimTypes.Role);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
-
         IReadOnlyList<OrderResponseDto> orders;
         
-        if (role == "Admin")
+        if (IsAdmin())
         {
             orders = await _orderService.GetAllAsync(query);  
         }
         else
         {
+            var userId = GetUserId();
             orders = await _orderService.GetAllForUserAsync(userId, query);  
         }
         
-        if (!orders.Any())
-        {
-            return NoContent();
-        }
         return Ok(orders);
     }
     
     [HttpGet("{orderId:int}")]
-    public async Task<IActionResult> GetOrderAsync(int orderId)
+    public async Task<IActionResult> GetByIdAsync(int orderId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var role = User.FindFirstValue(ClaimTypes.Role);
-        if (userId == null)
+        OrderResponseDto? order;
+
+        if (IsAdmin())
         {
-            return Unauthorized();
+            order = await _orderService.GetByIdAsync(orderId);
+        }
+        else
+        {
+            var userId = GetUserId();
+            order = await _orderService.GetByIdAsync(userId, orderId);  
         }
 
-        var order = await _orderService.GetByIdAsync(userId, role, orderId);
-
-        if (order == null)
-        {
-            return NoContent();
-        }
         return Ok(order);
     }
     
+    [Authorize(Roles = "User")]
     [HttpPost]
-    public async Task<IActionResult> CheckOutAsync(CheckoutDto dto)
+    public async Task<IActionResult> CheckoutAsync(CheckoutDto dto)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        var userId = GetUserId();
     
-        await _orderService.Checkout(userId, dto);
+        await _orderService.CheckoutAsync(userId, dto);
         
         return NoContent();
     }
     
-    [HttpPost("{orderId:int}")]
+    [Authorize(Roles = "Admin")]
+    [HttpPatch("{orderId:int}/status")]
     public async Task<IActionResult> ChangeOrderStatusAsync(int orderId, ChangeOrderStatusDto dto)
     {
-        if (dto.IsShipped.HasValue)
-        {
-            return NoContent();
-        }
-        await _orderService.MarkOrderIsAShipped(orderId);
+        await _orderService.ChangeOrderStatusAsync(orderId, dto);
         
         return NoContent();
     }
+    
+    [HttpDelete("{orderId:int}")]
+    public async Task<IActionResult> CancelOrderAsync(int orderId)
+    {
+        if (IsAdmin())
+        {
+            await _orderService.CancelOrderAsync(orderId);
+        }
+        else
+        {
+            var userId = GetUserId();
+            await _orderService.CancelOrderAsync(userId, orderId);  
+        }
+        
+        return NoContent();
+    }
+    
+    private int GetUserId()
+    {
+        var value = User.FindFirstValue("business_user_id");
+        return value == null ? throw new UnauthorizedAccessException() : int.Parse(value);
+    }
 
+    private bool IsAdmin() =>
+        User.IsInRole("Admin");
+    
 }

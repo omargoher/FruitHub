@@ -27,18 +27,18 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
                 OrderStatus.Shipped =>
                     query.Where(o => o.IsShipped),
 
-                // OrderStatus.Cancelled =>
-                //     query.Where(o => o.IsCancelled),
+                OrderStatus.Cancelled =>
+                    query.Where(o => o.IsCanceled),
 
                 _ => query
             };
         }
 
-        // if (filter.FromDate.HasValue)
-        //     query = query.Where(o => o.CreatedAt >= filter.FromDate.Value);
-        //
-        // if (filter.ToDate.HasValue)
-        //     query = query.Where(o => o.CreatedAt <= filter.ToDate.Value);
+        if (filter.FromDate.HasValue)
+            query = query.Where(o => o.CreatedAt >= filter.FromDate.Value);
+        
+        if (filter.ToDate.HasValue)
+            query = query.Where(o => o.CreatedAt <= filter.ToDate.Value);
 
         if (filter.UserId.HasValue)
             query = query.Where(o => o.UserId == filter.UserId.Value);
@@ -70,8 +70,7 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
         };
         return query;
     }
-
-    // May add it in generic repo
+    
     private IQueryable<Order> ApplyPagination(IQueryable<Order> query, int? offset, int? limit)
     {
         if(offset.HasValue) query = query.Skip(offset.Value);
@@ -79,7 +78,7 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
         return query;
     }
 
-    public async Task<IReadOnlyList<OrderResponseDto>> GetAll(OrderQuery orderQuery)
+    public async Task<IReadOnlyList<OrderResponseDto>> GetAllWithOrderItemsAsync(OrderQuery orderQuery)
     {
         IQueryable<Order> query = _context.Orders;
 
@@ -89,6 +88,7 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
 
         return await query.Select(o => new OrderResponseDto
         {
+            OrderId = o.Id,
             UserId = o.UserId,
             CustomerFullName = o.CustomerFullName,
             CustomerAddress = o.CustomerAddress,
@@ -100,6 +100,7 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
             ShippingFees = o.ShippingFees,
             IsShipped = o.IsShipped,
             IsPayed = o.IsPayed,
+            IsCanceled = o.IsCanceled,
             Items = o.Items.Select(oi => new OrderItemResponseDto
             {
                 ProductId = oi.ProductId,
@@ -110,7 +111,7 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
         }).ToListAsync();
     }
     
-    public async Task<IReadOnlyList<OrderResponseDto>> GetOrdersForUser(int userId, OrderQuery orderQuery)
+    public async Task<IReadOnlyList<OrderResponseDto>> GetByUserIdWithOrderItemsAsync(int userId, OrderQuery orderQuery)
     {
         IQueryable<Order> query = _context.Orders.Where(o => o.UserId == userId);
 
@@ -120,6 +121,8 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
 
         return await query.Select(o => new OrderResponseDto
         {
+            OrderId = o.Id,
+            UserId = o.UserId,
             CustomerFullName = o.CustomerFullName,
             CustomerAddress = o.CustomerAddress,
             CustomerCity = o.CustomerCity,
@@ -129,7 +132,8 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
             TotalPrice = o.TotalPrice,
             ShippingFees = o.ShippingFees,
             IsShipped = o.IsShipped,
-            IsPayed = o.IsPayed,
+            IsPayed = o.IsPayed, 
+            IsCanceled = o.IsCanceled,
             Items = o.Items.Select(oi => new OrderItemResponseDto
             {
                 ProductId = oi.ProductId,
@@ -140,11 +144,13 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
         }).ToListAsync();
     }
 
-    public async Task<OrderResponseDto?> GetById(int orderId)
+    public async Task<OrderResponseDto?> GetByIdWithOrderItemsAsync(int orderId)
     {
         return await  _context.Orders.Where(o => o.Id == orderId)
             .Select(o => new OrderResponseDto
             {
+                OrderId = o.Id,
+                UserId = o.UserId,
                 CustomerFullName = o.CustomerFullName,
                 CustomerAddress = o.CustomerAddress,
                 CustomerCity = o.CustomerCity,
@@ -155,6 +161,7 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
                 ShippingFees = o.ShippingFees,
                 IsShipped = o.IsShipped,
                 IsPayed = o.IsPayed,
+                IsCanceled = o.IsCanceled,
                 Items = o.Items.Select(oi => new OrderItemResponseDto
                 {
                     ProductId = oi.ProductId,
@@ -164,6 +171,4 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
                 }).ToList()
             }).FirstOrDefaultAsync();
     }
-    
-    
 }

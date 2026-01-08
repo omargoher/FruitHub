@@ -4,6 +4,7 @@ namespace FruitHub.ApplicationCore.DTOs.Order;
 
 public class OrderResponseDto
 {
+    public int OrderId { get; set; }
     public int UserId { get; set; }
     public string CustomerFullName { get; set; } = null!;
     public string CustomerAddress { get; set; } = null!;
@@ -15,5 +16,6 @@ public class OrderResponseDto
     public decimal ShippingFees { get; set; }
     public bool IsShipped { get; set; }
     public bool IsPayed { get; set; }
+    public bool IsCanceled { get; set; }
     public IReadOnlyList<OrderItemResponseDto> Items { get; set; } = [];
 }

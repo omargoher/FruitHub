@@ -6,7 +6,7 @@ namespace FruitHub.ApplicationCore.Interfaces.Repository;
 
 public interface IOrderRepository : IGenericRepository<Order, int>
 {
-   Task<IReadOnlyList<OrderResponseDto>> GetOrdersForUser(int userId, OrderQuery query);
-   Task<IReadOnlyList<OrderResponseDto>> GetAll(OrderQuery query);
-   Task<OrderResponseDto?> GetById(int orderId);
+   Task<IReadOnlyList<OrderResponseDto>> GetByUserIdWithOrderItemsAsync(int userId, OrderQuery query);
+   Task<IReadOnlyList<OrderResponseDto>> GetAllWithOrderItemsAsync(OrderQuery query);
+   Task<OrderResponseDto?> GetByIdWithOrderItemsAsync(int orderId);
 }

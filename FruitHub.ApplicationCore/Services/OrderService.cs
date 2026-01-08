@@ -1,5 +1,5 @@
-using FruitHub.ApplicationCore.DTOs.Cart;
 using FruitHub.ApplicationCore.DTOs.Order;
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Interfaces.Services;
@@ -7,10 +7,10 @@ using FruitHub.ApplicationCore.Models;
 
 namespace FruitHub.ApplicationCore.Services;
 
-public class OrderService : IOrderService
+public class 
+    OrderService : IOrderService
 {
     private readonly IUnitOfWork _uow;
-    private readonly IProductRepository _productRepo;
     private readonly IUserRepository _userRepo;
     private readonly IOrderRepository _orderRepo;
     private readonly ICartRepository _cartRepo;
@@ -18,82 +18,72 @@ public class OrderService : IOrderService
     public OrderService(IUnitOfWork uow)
     {
         _uow = uow;
-        _productRepo = uow.Product;
         _userRepo = uow.User;
         _orderRepo = uow.Order;
         _cartRepo = uow.Cart;
     }
 
-    // TODO Filtering, Sorting, Paggination
-    public async Task<IReadOnlyList<OrderResponseDto>> GetAllForUserAsync(string identityUserId, OrderQuery query)
-    {
-        var user = await _userRepo.GetByIdentityUserIdAsync(identityUserId);
-
-        if (user == null)
-        {
-            throw new KeyNotFoundException("User not found");
-        }
-
-        return await _orderRepo.GetOrdersForUser(user.Id, query);
-    }
-
     public async Task<IReadOnlyList<OrderResponseDto>> GetAllAsync(OrderQuery query)
     {
-        return await _orderRepo.GetAll(query);
+        return await _orderRepo.GetAllWithOrderItemsAsync(query);
     }
     
-    public async Task<OrderResponseDto?> GetByIdAsync(string identityUserId, string role, int orderId)
+    public async Task<IReadOnlyList<OrderResponseDto>> GetAllForUserAsync(int userId, OrderQuery query)
     {
-        if(role == "Admin") return await _orderRepo.GetById(orderId);
-        
-        // Get User
-        var user = await _userRepo.GetByIdentityUserIdAsync(identityUserId);
-
-        if (user == null)
+        if (!await _userRepo.IsExistAsync(userId))
         {
-            throw new KeyNotFoundException("User not found");
+            throw new NotFoundException($"User with id {userId} not found");
         }
-        
-        var order = await _orderRepo.GetById(orderId);
+
+        return await _orderRepo.GetByUserIdWithOrderItemsAsync(userId, query);
+    }
+
+
+    public async Task<OrderResponseDto?> GetByIdAsync(int orderId)
+    {
+        return await _orderRepo.GetByIdWithOrderItemsAsync(orderId);
+    }
+
+    public async Task<OrderResponseDto?> GetByIdAsync(int userId, int orderId)
+    {
+        if (!await _userRepo.IsExistAsync(userId))
+        {
+            throw new NotFoundException($"User with id {userId} not found");
+        }
+
+        var order = await _orderRepo.GetByIdWithOrderItemsAsync(orderId);
 
         if (order == null) return order;
-        
-        if (order.UserId != user.Id)
+
+        if (order.UserId != userId)
         {
-            // may create custom exception 
-            throw new UnauthorizedAccessException("You are not allowed to access this order");
+            throw new ForbiddenException("You are not allowed to access this order");
         }
 
         return order;
     }
-    
-    public async Task Checkout(string identityUserId, CheckoutDto dto)
-    {
-        // Get User
-        var user = await _userRepo.GetByIdentityUserIdAsync(identityUserId);
 
-        if (user == null)
+    public async Task CheckoutAsync(int userId, CheckoutDto dto)
+    {
+        if (!await _userRepo.IsExistAsync(userId))
         {
-            throw new KeyNotFoundException("User not found");
+            throw new NotFoundException($"User with id {userId} not found");
         }
 
-        // Get Cart
-        var cart = await _cartRepo.GetWithCartItemsAndProductsAsync(user.Id);
-
+        var cart = await _cartRepo.GetByUserIdWithCartItemsAndProductsAsync(userId);
         if(cart == null || !cart.Items.Any())
         {
-            throw new InvalidOperationException("Cart is empty");
+            throw new InvalidRequestException("Cart is empty");
         }
 
-        // Create Order
         var order = new Order();
-        order.UserId = user.Id;
+        order.UserId = userId;
         
         foreach (var item in cart.Items)
         {
             if (item.Product.Stock < item.Quantity)
             {
-                throw new InvalidOperationException($"Only Avaliable for {item.Product.Name}  {item.Product.Stock} pieces");
+                throw new InvalidRequestException($"Only {item.Product.Stock} items available for {item.Product.Name}");
             }
             
             order.Items.Add(new OrderItem
@@ -110,36 +100,102 @@ public class OrderService : IOrderService
         order.CustomerCity = dto.CustomerCity;
         order.CustomerDepartment = dto.CustomerDepartment;
         order.CustomerPhoneNumber = dto.CustomerPhoneNumber;
-        order.ShippingFees = 30.0m; // => this hardcode now but 
-        order.IsShipped = false;
-        order.IsPayed = false; // => user pay when dreven order  
+        order.ShippingFees = 30.0m; // => currently this hardcode
+        // => The user pays when the order is delivered. 
 
         order.SubPrice = cart.Items.Sum(i => i.Quantity * i.Product.Price);
         order.TotalPrice = order.SubPrice + order.ShippingFees;
 
-        // save order
         _orderRepo.Add(order);
         
-        // Clear Cart
         cart.Items.Clear();
         
         await _uow.SaveChangesAsync();
     }
 
-    // User will pay when deliver order in current business logic 
-    public async Task MarkOrderIsAShipped(int orderId)
+    // The user pays when the order is delivered in current business logic 
+    public async Task ChangeOrderStatusAsync(int orderId, ChangeOrderStatusDto dto)
     {
         var order = await _orderRepo.GetByIdAsync(orderId);
 
         if (order == null)
-            throw new KeyNotFoundException("Order not found");
+        {
+            throw new NotFoundException($"Order with id {orderId} not found");
+        }
+
+        if (dto.IsShipped.HasValue && dto.IsPayed.HasValue)
+        {
+            if (dto.IsShipped.Value && !dto.IsPayed.Value)
+            {
+                throw new InvalidRequestException("Order Can not be shipped and not payed");
+            }
+        }
+
+        if (dto.IsShipped.HasValue)
+        {
+            order.IsShipped = dto.IsShipped.Value;
+
+            // Is order Is Shipped so should be Is Payed but 
+            if (order.IsShipped)
+            {
+                order.IsPayed = true;
+            }
+        }
+        if (dto.IsPayed.HasValue)
+        {
+            order.IsPayed = dto.IsPayed.Value;
+
+            // if order not payed yet so can not be shipped
+            if (!order.IsPayed)
+            {
+                order.IsShipped = false;
+            }
+        }
+
+        _orderRepo.Update(order);
+        await _uow.SaveChangesAsync();
+    }
+
+    public async Task CancelOrderAsync(int orderId)
+    {
+        var order = await _orderRepo.GetByIdAsync(orderId);
+
+        if (order == null)
+            throw new NotFoundException($"Order with id {orderId} not found");
+
+        order.IsCanceled = true;
+
+        // Id order is canceled so order can not be shipped or payed 
+        order.IsShipped = false;
+        order.IsPayed = false;
         
-        if (order.IsShipped)
-            throw new InvalidOperationException("Order is already shipped");
+        _orderRepo.Update(order);
+        await _uow.SaveChangesAsync();
+    }
+    
+    public async Task CancelOrderAsync(int userId, int orderId)
+    {
+        if (!await _userRepo.IsExistAsync(userId))
+        {
+            throw new NotFoundException($"User with id {userId} not found");
+        }
 
-        order.IsShipped = true;
-        order.IsPayed = true;
+        var order = await _orderRepo.GetByIdAsync(orderId);
 
+        if (order == null)
+            throw new NotFoundException($"Order with id {orderId} not found");
+
+        if (order.UserId != userId)
+        {
+            throw new ForbiddenException("You are not allowed to access this order");
+        }
+        
+        order.IsCanceled = true;
+
+        // Id order is canceled so order can not be shipped or payed 
+        order.IsShipped = false;
+        order.IsPayed = false;
+        
         _orderRepo.Update(order);
         await _uow.SaveChangesAsync();
     }
