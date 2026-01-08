@@ -1,4 +1,5 @@
 using FruitHub.ApplicationCore.DTOs.Cart;
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Interfaces.Services;
@@ -21,35 +22,33 @@ public class CartService : ICartService
         _cartRepo = uow.Cart;
     }
 
-    public async Task<IReadOnlyList<CartResponseDto>> GetItemsAsync(string identityUserId)
+    public async Task<IReadOnlyList<CartResponseDto>> GetAllItemsAsync(int userId)
     {
-        var user = await _userRepo.GetByIdentityUserIdAsync(identityUserId);
-
-        if (user == null)
+        if (!await _userRepo.IsExistAsync(userId))
         {
-            throw new KeyNotFoundException("User not found");
+            throw new NotFoundException($"User with id {userId} not found");
         }
 
-        return await _cartRepo.GetWithCartItemsAsync(user.Id);
+        return await _cartRepo.GetByUserIdWithCartItemsAsync(userId);
     }
 
-    public async Task AddItemAsync(string identityUserId, int productId, int quantity)
+    public async Task AddItemAsync(int userId, int productId, int quantity)
     {
         if (quantity <= 0)
-            throw new ArgumentException("Quantity must be greater than zero");
+        {
+            throw new InvalidRequestException("Quantity must be greater than zero");
+        }
 
-        var user = await _userRepo.GetByIdentityUserIdWithCartAsync(identityUserId);
-
+        var user = await _userRepo.GetByIdWithCartAsync(userId);
         if (user == null)
         {
-            throw new KeyNotFoundException("User not found");
+            throw new NotFoundException($"User with id {userId} not found");
         }
 
         var product = await _productRepo.GetByIdAsync(productId);
-
         if (product == null)
         {
-            throw new KeyNotFoundException("Product not found");
+            throw new NotFoundException($"Product with id {productId} not found");
         }
 
         user.Cart ??= new Cart
@@ -65,7 +64,7 @@ public class CartService : ICartService
             var newQuantity = existItem.Quantity + quantity;
             if (product.Stock < newQuantity)
             {
-                throw new InvalidOperationException($"Can set only {product.Stock}");
+                throw new InvalidRequestException($"Can set only {product.Stock} and you set {newQuantity}");
             }
 
             existItem.Quantity = newQuantity;
@@ -74,7 +73,7 @@ public class CartService : ICartService
         {
             if (product.Stock < quantity)
             {
-                throw new InvalidOperationException($"Can set only {product.Stock}");
+                throw new InvalidRequestException($"Can set only {product.Stock} and you try set {quantity}");
             }
 
             var item = new CartItem
@@ -88,58 +87,55 @@ public class CartService : ICartService
         await _uow.SaveChangesAsync();
     }
 
-    public async Task UpdateQuantityAsync(string identityUserId, int productId, int quantity)
+    public async Task UpdateQuantityAsync(int userId, int productId, int quantity)
     {
         if (quantity <= 0)
-            throw new ArgumentException("Quantity must be greater than zero");
+            throw new InvalidRequestException("Quantity must be greater than zero");
 
-        var user = await _userRepo.GetByIdentityUserIdWithCartAsync(identityUserId);
-
+        var user = await _userRepo.GetByIdWithCartAsync(userId);
         if (user == null)
         {
-            throw new KeyNotFoundException("User not found");
+            throw new NotFoundException($"User with id {userId} not found");
         }
 
         var product = await _productRepo.GetByIdAsync(productId);
-
         if (product == null)
         {
-            throw new KeyNotFoundException("Product not found");
+            throw new NotFoundException($"Product with id {productId} not found");
         }
 
         if (product.Stock < quantity)
         {
-            throw new InvalidOperationException($"Can set only {product.Stock}");
+            throw new InvalidRequestException($"Can set only {product.Stock} and you try set {quantity}");
         }
 
         if (user.Cart == null)
         {
-            throw new KeyNotFoundException("Cart not found");
+            throw new NotFoundException("Cart Is Empty");
         }
 
         var existItem = user.Cart.Items.FirstOrDefault(ci => ci.ProductId == productId);
 
         if (existItem == null)
         {
-            throw new KeyNotFoundException("Item not found in cart");
+            throw new NotFoundException($"Product with id {productId} not found in your cart");
         }
         existItem.Quantity = quantity;
 
         await _uow.SaveChangesAsync();
     }
 
-    public async Task RemoveItemAsync(string identityUserId, int productId)
+    public async Task RemoveItemAsync(int userId, int productId)
     {
-        var user = await _userRepo.GetByIdentityUserIdWithCartAsync(identityUserId);
-
+        var user = await _userRepo.GetByIdWithCartAsync(userId);
         if (user == null)
         {
-            throw new KeyNotFoundException("User not found");
+            throw new NotFoundException($"User with id {userId} not found");
         }
         
         if (user.Cart == null)
         {
-            throw new KeyNotFoundException("Cart not found");
+            throw new NotFoundException("Cart Is Empty");
         }
         
         var existItem = user.Cart.Items.FirstOrDefault(ci => ci.ProductId == productId);

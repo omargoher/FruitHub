@@ -11,9 +11,10 @@ public class CartRepository : GenericRepository<Cart, int>, ICartRepository
     {
     }
 
-    public async Task<IReadOnlyList<CartResponseDto>> GetWithCartItemsAsync(int userId)
+    public async Task<IReadOnlyList<CartResponseDto>> GetByUserIdWithCartItemsAsync(int userId)
     {
         return await _context.Carts
+            .AsNoTracking()
             .Where(c => c.UserId == userId)
             .Select(c => new CartResponseDto
             {
@@ -28,26 +29,11 @@ public class CartRepository : GenericRepository<Cart, int>, ICartRepository
             }).ToListAsync();
     }
     
-    public async Task<Cart?> GetWithCartItemsAndProductsAsync(int userId)
+    public async Task<Cart?> GetByUserIdWithCartItemsAndProductsAsync(int userId)
     {
         return await _context.Carts
             .Include(c => c.Items)
             .ThenInclude(ci => ci.Product)
             .FirstOrDefaultAsync(c => c.UserId == userId);
-    }
-    public async Task<CartItem?> GetItemAsync(int userId, int productId)
-    {
-        return await _context.CartItems
-            .FirstOrDefaultAsync(ci =>
-                ci.Cart.User.Id == userId &&
-                ci.ProductId == productId);
-    }
-    
-    public async Task<bool> CheckIfProductExist(int userId, int productId)
-    {
-        return await _context.Carts
-            .AnyAsync(c =>
-                c.UserId == userId
-                && c.Items.Any(ci => ci.ProductId == productId));
     }
 }

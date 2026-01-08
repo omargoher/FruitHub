@@ -9,7 +9,7 @@ namespace FruitHub.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize(Roles = "User")]
 public class CartController : ControllerBase
 {
     private readonly ICartService _cartService;
@@ -20,32 +20,20 @@ public class CartController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAsync()
+    public async Task<IActionResult> GetAllItemsAsync()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        var userId = GetUserId();
     
-        var cartItems = await _cartService.GetItemsAsync(userId);
+        var cartItems = 
+            await _cartService.GetAllItemsAsync(userId);
     
-        if (!cartItems.Any())
-        {
-            return NoContent();
-        }
-        
         return Ok(cartItems);
     }
     
     [HttpPost("{productId:int}")]
-    public async Task<IActionResult> AddItemAsync(int productId, [FromBody] AddItemToCartDto dto)
+    public async Task<IActionResult> AddItemAsync(int productId, [FromBody] CartDto dto)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        var userId = GetUserId();
     
         await _cartService.AddItemAsync(userId, productId, dto.Quantity);
         
@@ -53,13 +41,9 @@ public class CartController : ControllerBase
     }
     
     [HttpPut("{productId:int}")]
-    public async Task<IActionResult> UpdateQuantityAsync(int productId, [FromBody] UpdateQuantityDto dto)
+    public async Task<IActionResult> UpdateQuantityAsync(int productId, [FromBody] CartDto dto)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        var userId = GetUserId();
     
         await _cartService.UpdateQuantityAsync(userId, productId, dto.Quantity);
         
@@ -69,14 +53,16 @@ public class CartController : ControllerBase
     [HttpDelete("{productId:int}")]
     public async Task<IActionResult> RemoveItemAsync(int productId)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId == null)
-        {
-            return Unauthorized();
-        }
+        var userId = GetUserId();
     
         await _cartService.RemoveItemAsync(userId, productId);
         
         return NoContent();
+    }
+    
+    private int GetUserId()
+    {
+        var value = User.FindFirstValue("business_user_id");
+        return value == null ? throw new UnauthorizedAccessException() : int.Parse(value);
     }
 }
