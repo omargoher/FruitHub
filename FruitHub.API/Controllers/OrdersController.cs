@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FruitHub.API.Extensions;
 using FruitHub.ApplicationCore.DTOs.Order;
 using FruitHub.ApplicationCore.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -30,7 +31,7 @@ public class OrdersController : ControllerBase
         }
         else
         {
-            var userId = GetUserId();
+            var userId = ClaimsPrincipalExtensions.GetUserId(User);
             orders = await _orderService.GetAllForUserAsync(userId, query);  
         }
         
@@ -48,7 +49,7 @@ public class OrdersController : ControllerBase
         }
         else
         {
-            var userId = GetUserId();
+            var userId = ClaimsPrincipalExtensions.GetUserId(User);
             order = await _orderService.GetByIdAsync(userId, orderId);  
         }
 
@@ -59,7 +60,7 @@ public class OrdersController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CheckoutAsync(CheckoutDto dto)
     {
-        var userId = GetUserId();
+        var userId = ClaimsPrincipalExtensions.GetUserId(User);
     
         await _orderService.CheckoutAsync(userId, dto);
         
@@ -84,17 +85,11 @@ public class OrdersController : ControllerBase
         }
         else
         {
-            var userId = GetUserId();
+            var userId = ClaimsPrincipalExtensions.GetUserId(User);
             await _orderService.CancelOrderAsync(userId, orderId);  
         }
         
         return NoContent();
-    }
-    
-    private int GetUserId()
-    {
-        var value = User.FindFirstValue("business_user_id");
-        return value == null ? throw new UnauthorizedAccessException() : int.Parse(value);
     }
 
     private bool IsAdmin() =>

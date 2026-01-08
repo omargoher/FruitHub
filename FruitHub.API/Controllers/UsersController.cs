@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FruitHub.API.Extensions;
 using FruitHub.ApplicationCore.DTOs.Auth.Register;
 using FruitHub.ApplicationCore.DTOs.User;
 using FruitHub.ApplicationCore.Interfaces.Services;
@@ -32,7 +33,7 @@ public class UsersController : ControllerBase
     [HttpGet("me")]
     public async Task<IActionResult> GetByIdAsync()
     {
-        var userId = GetUserId();
+        var userId = ClaimsPrincipalExtensions.GetUserId(User);
         
         var userProfile = await _userService.GetByIdAsync(userId);
         
@@ -43,15 +44,10 @@ public class UsersController : ControllerBase
     [HttpPatch("me")]
     public async Task<IActionResult> UpdateAsync([FromBody] UpdateUserDto dto)
     {
-        var userId = GetUserId();
+        var userId = ClaimsPrincipalExtensions.GetUserId(User);
         
         await _userService.UpdateAsync(userId, dto);
         return NoContent();
     }
     
-    private int GetUserId()
-    {
-        var value = User.FindFirstValue("business_user_id");
-        return value == null ? throw new UnauthorizedAccessException() : int.Parse(value);
-    }
 }

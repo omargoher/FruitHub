@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FruitHub.API.Extensions;
 using FruitHub.ApplicationCore.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ public class UserFavoritesController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllAsync()
     {
-        var userId = GetUserId();
+        var userId = ClaimsPrincipalExtensions.GetUserId(User);
     
         var favoriteProducts = await _userFavoritesService
             .GetAllAsync(userId);
@@ -31,7 +32,7 @@ public class UserFavoritesController : ControllerBase
     [HttpPost("{productId:int}")]
     public async Task<IActionResult> AddProductAsync(int productId)
     {
-        var userId = GetUserId();
+        var userId = ClaimsPrincipalExtensions.GetUserId(User);
     
         await _userFavoritesService.AddAsync(userId, productId);
         
@@ -41,7 +42,7 @@ public class UserFavoritesController : ControllerBase
     [HttpDelete("{productId:int}")]
     public async Task<IActionResult> RemoveProductAsync(int productId)
     {
-        var userId = GetUserId();
+        var userId = ClaimsPrincipalExtensions.GetUserId(User);
     
         await _userFavoritesService.RemoveAsync(userId, productId);
         

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using FruitHub.API.Extensions;
 using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -17,13 +18,7 @@ public class ProductsController : ControllerBase
         _productService = productService;
     }
     
-    /*
-     * TODO
-     * http://localhost:5259/api/products?sortby=mostselling => try this when add orders to check it
-     *
-     * TODO
-     * http://localhost:5259/api/products?sortby=price&sortdir=desc => error with sqlite => try it with sqlserver
-     */
+    
     [HttpGet]
     public async Task<IActionResult> GetAllAsync([FromQuery] ProductQuery query)
     {
@@ -45,11 +40,7 @@ public class ProductsController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> CreateAsync([FromForm]CreateProductDto dto, [FromForm]IFormFile image)
     {
-        var adminId = User.FindFirstValue("business_admin_id");
-        if (adminId == null)
-        {
-            return Unauthorized();
-        }
+        var adminId = ClaimsPrincipalExtensions.GetAdminId(User);
         
         var imageDto = new ImageDto
         {
@@ -59,7 +50,7 @@ public class ProductsController : ControllerBase
         };
         
         
-        await _productService.CreateAsync(int.Parse(adminId), dto, imageDto);
+        await _productService.CreateAsync(adminId, dto, imageDto);
         
         return Created();
     }
