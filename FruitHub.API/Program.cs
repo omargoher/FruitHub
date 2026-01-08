@@ -31,11 +31,11 @@ public class Program
         builder.Services.AddOpenApi();
 
         builder.Services.AddDbContext<ApplicationDbContext>(
-            options => options.UseSqlite(builder.Configuration.GetConnectionString("Sqlite"),
+            options => options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer"),
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
         
         builder.Services.AddDbContext<AppIdentityDbContext>(
-            options => options.UseSqlite(builder.Configuration.GetConnectionString("Sqlite"),
+            options => options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServer"),
                 b => b.MigrationsAssembly(typeof(AppIdentityDbContext).Assembly.FullName)));
         
         // Bind Jwt section to JwtOptions
@@ -46,13 +46,8 @@ public class Program
         builder.Services.Configure<JwtOptions>(
             builder.Configuration.GetSection("Jwt"));    
         
-        var imageOptions = new ImageStorageOptions
-        {
-            RootPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot/images"),
-            PublicBasePath = "/images"
-        };
-
-        builder.Services.AddSingleton(imageOptions);
+        builder.Services.Configure<RefreshTokenOptions>(
+            builder.Configuration.GetSection("RefreshToken"));
         
         builder.Services.Configure<EmailOptions>(
             builder.Configuration.GetSection("EmailSettings"));
@@ -154,6 +149,7 @@ public class Program
         builder.Services.AddScoped<ICategoryService, CategoryService>();
         builder.Services.AddScoped<IProductService, ProductService>();
         builder.Services.AddScoped<IImageService, ImageService>();
+        builder.Services.AddScoped<IImageValidator, ImageValidator>();
         
         builder.Services.AddScoped<ITokenService, TokenService>();
         builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();

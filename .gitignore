@@ -8,4 +8,6 @@ images/
 *.cache
 *.log
 *.db*
+.env
+./FruitHub.API/storage
 appsettings.Development.json
