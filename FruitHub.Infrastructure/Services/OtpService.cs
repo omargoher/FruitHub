@@ -38,12 +38,12 @@ public class OtpService : IOtpService
 
         if (cached is null)
         {
-            throw new InvalidOtp("OTP Is Expired");
+            throw new InvalidOtpException();
         }
 
         if (cached.AttemptsLeft <= 0)
         {
-            throw new InvalidOtp("OTP Is Locked");
+            throw new InvalidOtpException();
         }
 
         if (cached.Otp != otp)
@@ -56,7 +56,7 @@ public class OtpService : IOtpService
                 TimeSpan.FromMinutes(10)
             );
             
-            throw new InvalidOtp("OTP Is Invalid");
+            throw new InvalidOtpException();
         }
     }
 

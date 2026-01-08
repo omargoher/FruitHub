@@ -34,7 +34,7 @@ public class ProductService : IProductService
 
         if (product == null)
         {
-            throw new NotFoundException($"Product with id {productId} not found");
+            throw new NotFoundException("Product");
         }
         
         return product;
@@ -44,7 +44,7 @@ public class ProductService : IProductService
     {
         if (!await _uow.Category.IsExistAsync(categoryId))
         {
-            throw new NotFoundException($"Category with id {categoryId} not found");
+            throw new NotFoundException("Category");
         }
         
         var products = await _productRepo.GetByCategoryIdAsync(categoryId, productQuery);
@@ -56,13 +56,13 @@ public class ProductService : IProductService
         var admin = await _uow.Admin.GetByIdAsync(adminId);
         if (admin == null)
         {
-            throw new NotFoundException($"Admin with id {adminId} not found");
+            throw new NotFoundException("Admin");
         }
         
         var category = await _uow.Category.GetByIdAsync(dto.CategoryId);
         if (category == null)
         {
-            throw new NotFoundException($"Category with id {dto.CategoryId} not found");
+            throw new NotFoundException("Category");
         }
 
         _imageValidator.Validate(image);
@@ -97,7 +97,7 @@ public class ProductService : IProductService
         var product = await _productRepo.GetByIdAsync(productId);
         
         if (product == null)
-            throw new NotFoundException($"Product with id {productId} not found");
+            throw new NotFoundException("Product");
 
         string oldImage = product.ImageUrl;
         
@@ -114,7 +114,7 @@ public class ProductService : IProductService
             var category = await _uow.Category.GetByIdAsync(dto.CategoryId.Value);
             if (category == null)
             {
-                throw new NotFoundException($"Category with id {dto.CategoryId.Value} not found");
+                throw new NotFoundException("Category");
             }
 
             product.CategoryId = dto.CategoryId.Value;
@@ -142,7 +142,7 @@ public class ProductService : IProductService
     {
         var product = await _productRepo.GetByIdAsync(productId);
         if (product == null)
-            throw new NotFoundException($"Product with id {productId} not foun");
+            throw new NotFoundException("Product");
         
         await _imageService.DeleteAsync(product.ImageUrl);
         

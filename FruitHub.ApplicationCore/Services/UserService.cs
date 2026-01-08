@@ -25,7 +25,7 @@ public class UserService : IUserService
         
         if (user == null)
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
         
         return new UserProfileDto
@@ -42,7 +42,7 @@ public class UserService : IUserService
 
         if (user == null)
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
         
         user.FullName = dto.FullName ?? user.FullName;

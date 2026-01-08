@@ -24,7 +24,7 @@ public class ImageService : IImageService
         var path = Path.Combine(root, "storage", folder, fileName);
 
         if (!File.Exists(path))
-            throw new NotFoundException($"Image with this url images/{folder}/{fileName} not found");
+            throw new NotFoundException($"image");
 
         return Task.FromResult(path);
     }

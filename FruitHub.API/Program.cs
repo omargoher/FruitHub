@@ -1,5 +1,7 @@
 using System.Text;
+using FruitHub.API.DTOs;
 using FruitHub.API.Middlewares;
+using FruitHub.ApplicationCore.Errors;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Services;
 using FruitHub.ApplicationCore.Options;
@@ -128,13 +130,15 @@ public class Program
                     {
                         Field = x.Key,
                         Error = e.ErrorMessage
-                    }));
+                    })).ToList();
 
-                return new BadRequestObjectResult(new
+                var response = new ErrorResponse
                 {
+                    Code = ErrorsCode.ValidationError,
                     Message = "Validation failed",
                     Errors = errors
-                });
+                };
+                return new BadRequestObjectResult(response);
             };
         });
 

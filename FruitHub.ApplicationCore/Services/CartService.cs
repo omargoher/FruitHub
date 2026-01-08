@@ -26,7 +26,7 @@ public class CartService : ICartService
     {
         if (!await _userRepo.IsExistAsync(userId))
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
 
         return await _cartRepo.GetByUserIdWithCartItemsAsync(userId);
@@ -42,13 +42,13 @@ public class CartService : ICartService
         var user = await _userRepo.GetByIdWithCartAsync(userId);
         if (user == null)
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
 
         var product = await _productRepo.GetByIdAsync(productId);
         if (product == null)
         {
-            throw new NotFoundException($"Product with id {productId} not found");
+            throw new NotFoundException("Product");
         }
 
         user.Cart ??= new Cart
@@ -95,13 +95,13 @@ public class CartService : ICartService
         var user = await _userRepo.GetByIdWithCartAsync(userId);
         if (user == null)
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
 
         var product = await _productRepo.GetByIdAsync(productId);
         if (product == null)
         {
-            throw new NotFoundException($"Product with id {productId} not found");
+            throw new NotFoundException("Product");
         }
 
         if (product.Stock < quantity)
@@ -111,14 +111,14 @@ public class CartService : ICartService
 
         if (user.Cart == null)
         {
-            throw new NotFoundException("Cart Is Empty");
+            throw new NotFoundException("Cart");
         }
 
         var existItem = user.Cart.Items.FirstOrDefault(ci => ci.ProductId == productId);
 
         if (existItem == null)
         {
-            throw new NotFoundException($"Product with id {productId} not found in your cart");
+            throw new NotFoundException($"Product");
         }
         existItem.Quantity = quantity;
 
@@ -130,12 +130,12 @@ public class CartService : ICartService
         var user = await _userRepo.GetByIdWithCartAsync(userId);
         if (user == null)
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
         
         if (user.Cart == null)
         {
-            throw new NotFoundException("Cart Is Empty");
+            throw new NotFoundException("Cart");
         }
         
         var existItem = user.Cart.Items.FirstOrDefault(ci => ci.ProductId == productId);

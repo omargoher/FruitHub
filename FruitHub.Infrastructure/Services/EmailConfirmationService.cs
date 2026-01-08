@@ -23,8 +23,6 @@ public class EmailConfirmationService : IEmailConfirmationService
     
     public async Task SendAsync(SendEmailConfirmationCodeDto dto)
     {
-        ArgumentNullException.ThrowIfNull(dto);
-        
         var user = await _identityUserRepo.GetByEmail(dto.Email);
 
         if (user == null || user.EmailConfirmed)
@@ -44,8 +42,6 @@ public class EmailConfirmationService : IEmailConfirmationService
     
     public async Task ConfirmAsync(ConfirmEmailCodeDto confirmEmailDto)
     {
-        ArgumentNullException.ThrowIfNull(confirmEmailDto);
-        
         var user = await _identityUserRepo.GetByEmail(confirmEmailDto.Email);
         if (user == null || user.EmailConfirmed)
         {

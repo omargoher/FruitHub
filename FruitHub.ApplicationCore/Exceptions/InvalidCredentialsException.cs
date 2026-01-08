@@ -1,8 +1,14 @@
+using FruitHub.ApplicationCore.Errors;
+
 namespace FruitHub.ApplicationCore.Exceptions;
 
 public class InvalidCredentialsException : AppException 
 {
     public InvalidCredentialsException() : 
-        base("Email or Password incorrect", 401)
-    { }
+        base(
+            message: "Invalid email or password.",
+            errorCode: ErrorsCode.InvalidCredentials,
+            statusCode: 401)
+    {
+    }
 }

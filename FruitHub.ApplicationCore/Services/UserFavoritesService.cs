@@ -32,12 +32,12 @@ public class UserFavoritesService : IUserFavoritesService
     {
         if (!await _userRepo.IsExistAsync(userId))
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
         
         if (!await _productRepo.IsExistAsync(productId))
         {
-            throw new NotFoundException($"Product with id {productId} not found");
+            throw new NotFoundException("Product");
         }
         
         if (await _userFavoritesRepo.IsExistAsync(userId, productId))

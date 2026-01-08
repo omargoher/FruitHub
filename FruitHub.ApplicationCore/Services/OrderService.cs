@@ -32,7 +32,7 @@ public class
     {
         if (!await _userRepo.IsExistAsync(userId))
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
 
         return await _orderRepo.GetByUserIdWithOrderItemsAsync(userId, query);
@@ -48,7 +48,7 @@ public class
     {
         if (!await _userRepo.IsExistAsync(userId))
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
 
         var order = await _orderRepo.GetByIdWithOrderItemsAsync(orderId);
@@ -57,7 +57,7 @@ public class
 
         if (order.UserId != userId)
         {
-            throw new ForbiddenException("You are not allowed to access this order");
+            throw new ForbiddenException();
         }
 
         return order;
@@ -67,7 +67,7 @@ public class
     {
         if (!await _userRepo.IsExistAsync(userId))
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
 
         var cart = await _cartRepo.GetByUserIdWithCartItemsAndProductsAsync(userId);
@@ -120,7 +120,7 @@ public class
 
         if (order == null)
         {
-            throw new NotFoundException($"Order with id {orderId} not found");
+            throw new NotFoundException("Order");
         }
 
         if (dto.IsShipped.HasValue && dto.IsPayed.HasValue)
@@ -161,7 +161,7 @@ public class
         var order = await _orderRepo.GetByIdAsync(orderId);
 
         if (order == null)
-            throw new NotFoundException($"Order with id {orderId} not found");
+            throw new NotFoundException("Order");
 
         order.IsCanceled = true;
 
@@ -177,17 +177,17 @@ public class
     {
         if (!await _userRepo.IsExistAsync(userId))
         {
-            throw new NotFoundException($"User with id {userId} not found");
+            throw new NotFoundException("User");
         }
 
         var order = await _orderRepo.GetByIdAsync(orderId);
 
         if (order == null)
-            throw new NotFoundException($"Order with id {orderId} not found");
+            throw new NotFoundException("Order");
 
         if (order.UserId != userId)
         {
-            throw new ForbiddenException("You are not allowed to access this order");
+            throw new ForbiddenException();
         }
         
         order.IsCanceled = true;

@@ -36,7 +36,7 @@ public class CategoryService : ICategoryService
 
         if (category == null)
         {
-            throw new NotFoundException($"Category with id {categoryId} not found");
+            throw new NotFoundException("Category");
         }
         return new CategoryResponseDto
         {
@@ -49,7 +49,7 @@ public class CategoryService : ICategoryService
     {
         if (await _categoryRepo.IsNameExistAsync(dto.Name))
         {
-            throw new ConflictException($"Category with name {dto.Name} already exists");
+            throw new ConflictException("Category");
         }
 
         var category = new Category
@@ -71,14 +71,14 @@ public class CategoryService : ICategoryService
     {
         if (await _categoryRepo.IsNameExistAsync(dto.Name))
         {
-            throw new ConflictException($"Category with name {dto.Name} already exists");
+            throw new ConflictException("Category");
         }
         
         var category = await _categoryRepo.GetByIdAsync(categoryId);
         
         if (category == null)
         {
-            throw new NotFoundException($"Category with id {categoryId} not found");
+            throw new NotFoundException("Category");
         }
         
         category.Name = dto.Name;
@@ -93,7 +93,7 @@ public class CategoryService : ICategoryService
         
         if (category == null)
         {
-            throw new NotFoundException($"Category with id {categoryId} not found");
+            throw new NotFoundException("Category");
         }
         
         _categoryRepo.Remove(category);

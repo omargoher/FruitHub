@@ -1,7 +1,14 @@
+using FruitHub.ApplicationCore.Errors;
+
 namespace FruitHub.ApplicationCore.Exceptions;
 
 public class EmailNotConfirmedException : AppException
 {
-    public EmailNotConfirmedException() : 
-        base("Email is not Confirmed", 403){}
+    public EmailNotConfirmedException() :
+        base(message: "Email address is not confirmed.",
+            errorCode: ErrorsCode.EmailNotConfirmed,
+            statusCode: 403)
+    {
+        
+    }
 }

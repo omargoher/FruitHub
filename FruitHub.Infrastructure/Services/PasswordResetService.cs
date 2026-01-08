@@ -32,8 +32,6 @@ public class PasswordResetService : IPasswordResetService
 
     public async Task CreateAsync(CreatePasswordResetRequestDto dto)
     {
-        ArgumentNullException.ThrowIfNull(dto);
-        
         var user = await _userManager.FindByEmailAsync(dto.Email);
 
         if (user == null)
@@ -54,13 +52,10 @@ public class PasswordResetService : IPasswordResetService
 
     public async Task<VerifyPasswordResetCodeResponseDto> VerifyAsync(VerifyPasswordResetCodeDto dto)
     {
-        ArgumentNullException.ThrowIfNull(dto);
-        
         var user = await _userManager.FindByEmailAsync(dto.Email);
         if (user == null)
         {
-            // good return not found when user is null ?!
-            throw new NotFoundException("User not found");
+            throw new NotFoundException("User");
         }
         
         var key = $"{ForgetPasswordKey}:{dto.Email}";
@@ -84,20 +79,18 @@ public class PasswordResetService : IPasswordResetService
     
     public async Task ResetAsync(ResetPasswordDto dto)
     {
-        ArgumentNullException.ThrowIfNull(dto);
-        
         var key = $"{ForgetPasswordVerifyKey}:{dto.ResetToken}";
         var email = await _cache.GetAsync<string>(key);
 
         if (email == null)
         {
-            throw new InvalidResetPasswordToken();
+            throw new InvalidResetPasswordTokenException();
         }
 
         var user = await _userManager.FindByEmailAsync(email);
         if (user == null)
         {
-            throw new NotFoundException("User not found");
+            throw new NotFoundException("User");
         }
 
         var result = await _userManager.ResetPasswordAsync(
@@ -108,7 +101,8 @@ public class PasswordResetService : IPasswordResetService
 
         if (!result.Succeeded)
         {
-            throw new IdentityOperationException(result.Errors.Select(e => e.Description));
+            throw new IdentityOperationException(
+                result.Errors.Select(e => e.Description));
         }
 
         await _cache.RemoveAsync(key);

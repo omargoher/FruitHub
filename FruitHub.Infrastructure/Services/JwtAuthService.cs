@@ -68,11 +68,11 @@ public class JwtAuthService : IAuthService
             _uow.User.Add(businessUser);
 
             var saved = await _uow.SaveChangesAsync();
-            
-            if (saved == 0)
-            {
-                throw new RegistrationFailedException("Failed to create user");
-            }
+            //
+            // if (saved == 0)
+            // {
+            //     throw new RegistrationFailedException("Failed to create user");
+            // }
 
             // 4. Claims linking
             identityResult = await _identityUserRepo.AddClaimAsync(identityUser, new Claim(
