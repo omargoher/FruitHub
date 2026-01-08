@@ -1,10 +1,11 @@
 using System.Security.Claims;
 using FruitHub.ApplicationCore.Models;
+using FruitHub.Infrastructure.Identity.Models;
 using FruitHub.Infrastructure.Persistence;
-
-namespace FruitHub.Infrastructure.Identity;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Identity;
+
+namespace FruitHub.Infrastructure.Identity.Seeders;
 
 public static class IdentitySeeder
 {

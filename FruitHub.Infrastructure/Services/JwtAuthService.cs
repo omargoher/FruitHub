@@ -6,9 +6,11 @@ using FruitHub.ApplicationCore.DTOs.Auth.Register;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Models;
-using FruitHub.Infrastructure.Identity;
+using FruitHub.Infrastructure.Identity.Models;
 using FruitHub.Infrastructure.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Services;
+using FruitHub.Infrastructure.Interfaces.Repositories;
+using FruitHub.Infrastructure.Interfaces.Services;
 
 namespace FruitHub.Infrastructure.Services;
 public class JwtAuthService : IAuthService

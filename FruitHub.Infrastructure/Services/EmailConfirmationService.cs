@@ -2,6 +2,8 @@ using FruitHub.ApplicationCore.DTOs.Auth.EmailVerification;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces.Services;
 using FruitHub.Infrastructure.Interfaces;
+using FruitHub.Infrastructure.Interfaces.Repositories;
+using FruitHub.Infrastructure.Interfaces.Services;
 
 namespace FruitHub.Infrastructure.Services;
 

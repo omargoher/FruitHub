@@ -3,6 +3,7 @@ using System.Net.Mail;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.Infrastructure.Interfaces;
+using FruitHub.Infrastructure.Interfaces.Services;
 using Microsoft.Extensions.Options;
 
 namespace FruitHub.Infrastructure.Services;

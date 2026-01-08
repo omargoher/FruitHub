@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace FruitHub.Infrastructure.Identity;
+namespace FruitHub.Infrastructure.Identity.Models;
 
 public class ApplicationUser : IdentityUser
 {

@@ -2,8 +2,9 @@ using FruitHub.ApplicationCore.DTOs;
 using FruitHub.ApplicationCore.DTOs.Auth.PasswordRecovery;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces.Services;
-using FruitHub.Infrastructure.Identity;
+using FruitHub.Infrastructure.Identity.Models;
 using FruitHub.Infrastructure.Interfaces;
+using FruitHub.Infrastructure.Interfaces.Services;
 using Microsoft.AspNetCore.Identity;
 
 namespace FruitHub.Infrastructure.Services;

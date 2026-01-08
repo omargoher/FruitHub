@@ -1,6 +1,6 @@
 using FruitHub.ApplicationCore.DTOs.Product;
 using FruitHub.ApplicationCore.Enums;
-using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Enums.Product;
 using FruitHub.ApplicationCore.Models;
 using FruitHub.ApplicationCore.Interfaces.Repository;
 using Microsoft.EntityFrameworkCore;

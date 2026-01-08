@@ -1,4 +1,4 @@
-namespace FruitHub.Infrastructure.Interfaces;
+namespace FruitHub.Infrastructure.Interfaces.Services;
 
 public interface IAppCache
 {

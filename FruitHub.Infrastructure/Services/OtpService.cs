@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using FruitHub.Infrastructure.DTOs;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.Infrastructure.Interfaces;
+using FruitHub.Infrastructure.Interfaces.Services;
 
 namespace FruitHub.Infrastructure.Services;
 

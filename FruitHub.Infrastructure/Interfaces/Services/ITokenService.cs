@@ -1,9 +1,9 @@
 using FruitHub.ApplicationCore.DTOs.Auth.Refresh;
 using FruitHub.Infrastructure.DTOs;
-using FruitHub.Infrastructure.Identity;
+using FruitHub.Infrastructure.Identity.Models;
 using Microsoft.IdentityModel.Tokens;
 
-namespace FruitHub.Infrastructure.Interfaces;
+namespace FruitHub.Infrastructure.Interfaces.Services;
 
 public interface ITokenService
 {

@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using FruitHub.Infrastructure.Interfaces;
+using FruitHub.Infrastructure.Identity.Models;
+using FruitHub.Infrastructure.Interfaces.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 

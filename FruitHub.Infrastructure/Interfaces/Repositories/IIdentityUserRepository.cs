@@ -1,8 +1,8 @@
 using System.Security.Claims;
-using FruitHub.Infrastructure.Identity;
+using FruitHub.Infrastructure.Identity.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace FruitHub.Infrastructure.Interfaces;
+namespace FruitHub.Infrastructure.Interfaces.Repositories;
 
 // I use this repo becuase testing be easyer than use usermanager directly
 public interface IIdentityUserRepository

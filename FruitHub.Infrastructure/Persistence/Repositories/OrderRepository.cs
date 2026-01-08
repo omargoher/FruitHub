@@ -1,4 +1,5 @@
 using FruitHub.ApplicationCore.DTOs.Order;
+using FruitHub.ApplicationCore.Enums.Order;
 using FruitHub.ApplicationCore.Enums;
 using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Models;

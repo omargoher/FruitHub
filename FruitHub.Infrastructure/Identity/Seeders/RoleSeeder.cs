@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace FruitHub.Infrastructure.Identity;
+namespace FruitHub.Infrastructure.Identity.Seeders;
 
 public static class RoleSeeder
 {

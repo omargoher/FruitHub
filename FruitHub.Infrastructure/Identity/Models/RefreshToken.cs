@@ -1,4 +1,4 @@
-namespace FruitHub.Infrastructure.Identity;
+namespace FruitHub.Infrastructure.Identity.Models;
 
 public class RefreshToken
 {

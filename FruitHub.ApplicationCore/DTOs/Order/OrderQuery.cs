@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using FruitHub.ApplicationCore.Enums;
+using FruitHub.ApplicationCore.Enums.Order;
+using FruitHub.ApplicationCore.Enums.Product;
 
 namespace FruitHub.ApplicationCore.DTOs.Order;
 

@@ -1,4 +1,4 @@
-namespace FruitHub.ApplicationCore.Enums;
+namespace FruitHub.ApplicationCore.Enums.Order;
 
 public enum OrderStatus
 {
