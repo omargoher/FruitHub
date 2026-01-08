@@ -1,4 +1,5 @@
 using FruitHub.ApplicationCore.DTOs.Auth.Refresh;
+using FruitHub.Infrastructure.DTOs;
 using FruitHub.Infrastructure.Identity;
 using Microsoft.IdentityModel.Tokens;
 

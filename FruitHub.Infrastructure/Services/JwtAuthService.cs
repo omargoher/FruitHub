@@ -117,10 +117,10 @@ public class JwtAuthService : IAuthService
         var refreshToken = await _tokenService.CreateRefreshTokenAsync(user);
 
         response.Email = user.Email;
-        response.Token = new JwtSecurityTokenHandler().WriteToken(jwtToken);
-        response.TokenExpiresAt = jwtToken.ValidTo;
+        response.AccessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken);
+        response.AccessTokenExpiresAt = jwtToken.ValidTo;
         response.RefreshToken = refreshToken.Token;
-        response.RefreshExpiresAt = refreshToken.ExpiresAt;
+        response.RefreshTokenExpiresAt = refreshToken.ExpiresAt;
 
         return response;
     }
@@ -141,10 +141,10 @@ public class JwtAuthService : IAuthService
        var jwtToken = await _tokenService.GenerateJwtAsync(user);
 
        response.Email = user.Email;
-       response.Token = new JwtSecurityTokenHandler().WriteToken(jwtToken);
-       response.TokenExpiresAt = jwtToken.ValidTo;
+       response.AccessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken);
+       response.AccessTokenExpiresAt = jwtToken.ValidTo;
        response.RefreshToken = newRefreshToken.Token;
-       response.RefreshExpiresAt = newRefreshToken.ExpiresAt;
+       response.RefreshTokenExpiresAt = newRefreshToken.ExpiresAt;
 
        return response;
     }

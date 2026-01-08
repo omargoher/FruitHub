@@ -2,7 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using FruitHub.ApplicationCore.DTOs.Auth.Refresh;
+using FruitHub.Infrastructure.DTOs;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.Infrastructure.Identity;

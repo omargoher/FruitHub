@@ -1,4 +1,4 @@
-namespace FruitHub.ApplicationCore.DTOs.Auth.Refresh;
+namespace FruitHub.Infrastructure.DTOs;
 
 public class RefreshTokenDto
 {
