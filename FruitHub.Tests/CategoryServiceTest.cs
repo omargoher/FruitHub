@@ -1,4 +1,5 @@
 using FruitHub.ApplicationCore.DTOs.Category;
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Models;
@@ -18,166 +19,212 @@ public class CategoryServiceTest
         _uow = new Mock<IUnitOfWork>();
     }
     
+    private CategoryDto ValidCategoryDto()
+    {
+        return new CategoryDto
+        {
+            Name = "Fruit",
+        };
+    }
+    
     private CategoryService CreateSut()
     {
         return new CategoryService(
             _uow.Object
         );
-    }
+     }
 
-    [Fact]
-    public async Task GetAllAsync_ShouldReturnListOfCategories()
-    {
-        // Arrange 
-        _uow.Setup(x => x.Category.GetAllAsync())
-            .ReturnsAsync(new List<Category>
-            {
-                new Category
-                {
-                    Id = 1,
-                    Name = "C1"
-                },
-                new Category
-                {
-                    Id = 2,
-                    Name = "C2"
-                }
-            });
-        var sut = CreateSut();
-        
-        // Act
-        var result = await sut.GetAllAsync();
-        
-        // Assert
-        Assert.NotNull(result);
-    }
+     [Fact]
+     public async Task GetAllAsync_WhenSuccessful_ShouldReturnListOfCategories()
+     {
+         // Arrange 
+         _uow.Setup(x => x.Category.GetAllAsync())
+             .ReturnsAsync(new List<Category>
+             {
+                 new Category
+                 {
+                     Id = 1,
+                     Name = "C1"
+                 },
+                 new Category
+                 {
+                     Id = 2,
+                     Name = "C2"
+                 }
+             });
+         var sut = CreateSut();
+         
+         // Act
+         var result = await sut.GetAllAsync();
+         
+         // Assert
+         Assert.NotNull(result);
+     }
 
-    [Fact]
-    public async Task CreateAsync_WhenNameIsEmptyOrNullOrWhiteSpace_ThrowArgumentException()
-    {
-        // Arrange
-        var sut = CreateSut();
-        
-        // Act
-        var result = () => sut.CreateAsync(" ");
-        
-        // Assert
-        await Assert.ThrowsAsync<ArgumentException>(result);
-    }
-    
-    [Fact]
-    public async Task CreateAsync_WhenValid_AddCategory()
-    {
-        // Arrange
-        _uow.Setup(x => x.Category.Add(It.IsAny<Category>()));
-        _uow.Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1);
-        var sut = CreateSut();
-        
-        // Act
-        await sut.CreateAsync("c1");
-        
-        // Assert
-        _uow.Verify(x => x.Category.Add(It.IsAny<Category>()), Times.Once);
-        _uow.Verify(x => x.SaveChangesAsync(), Times.Once);
-    }
-    
-    [Fact]
-    public async Task UpdateAsync_WhenDtoNull_ThrowArgumentException()
-    {
-        // Arrange
-        var sut = CreateSut();
-        
-        // Act
-        var result = () => sut.UpdateAsync(null);
-        
-        // Assert
-        await Assert.ThrowsAsync<ArgumentException>(result);
-    }
-    
-    [Fact]
-    public async Task UpdateAsync_WhenCategoryNotFound_ThrowKeyNotFoundException()
-    {
-        // Arrange
-        _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
-            .ReturnsAsync((Category?)null);
-        var sut = CreateSut();
-        
-        // Act
-        var result = () => sut.UpdateAsync(new UpdateCategoryDto());
-        
-        // Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(result);
-    }
-    
-    [Fact]
-    public async Task UpdateAsync_WhenValid_UpdateCategory()
-    {
-        // Arrange
-        var category = new Category
-        {
-            Id = 1,
-            Name = "C1"
-        };
-        var dto = new UpdateCategoryDto
-        {
-            Id = 1,
-            Name = "c2"
-        };
-        _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
-            .ReturnsAsync(category);
-        _uow.Setup(x => x.Category.Update(It.IsAny<Category>()));
-        _uow.Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1);
-        
-        var sut = CreateSut();
-        
-        // Act
-        await sut.UpdateAsync(dto);
-        
-        // Assert
-        Assert.Equal(dto.Name, category.Name);
-        _uow.Verify(x => x.Category.Update(It.IsAny<Category>()), Times.Once);
-        _uow.Verify(x => x.SaveChangesAsync(), Times.Once);
-    }
-    
-    [Fact]
-    public async Task DeleteAsync_WhenCategoryNotFound_ThrowKeyNotFoundException()
-    {
-        // Arrange
-        _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
-            .ReturnsAsync((Category?)null);
-        var sut = CreateSut();
-        
-        // Act
-        var result = () => sut.DeleteAsync(1);
-        
-        // Assert
-        await Assert.ThrowsAsync<KeyNotFoundException>(result);
-    }
-    
-    [Fact]
-    public async Task DeleteAsync_WhenValid_DeleteCategory()
-    {
-        // Arrange
-        var category = new Category
-        {
-            Id = 1,
-            Name = "C1"
-        };
-        _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
-            .ReturnsAsync(category);
-        _uow.Setup(x => x.Category.Remove(It.IsAny<Category>()));
-        _uow.Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1);
-        
-        var sut = CreateSut();
-        
-        // Act
-        await sut.DeleteAsync(1);
-        
-        // Assert
-        _uow.Verify(x => x.Category.Remove(It.IsAny<Category>()), Times.Once);
-        _uow.Verify(x => x.SaveChangesAsync(), Times.Once);
-    }
+     [Fact]
+     public async Task GetByIdAsync_WhenCategoryNotFound_ShouldThrowNotFoundException()
+     {
+         // Arrange
+         _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
+             .ReturnsAsync((Category?)null);
+         
+         var sut = CreateSut();
+         
+         // Act & Assert
+         await Assert.ThrowsAsync<NotFoundException>(() => sut.GetByIdAsync(1));
+     }
+
+     [Fact]
+     public async Task GetByIdAsync_WhenSuccessful_ShouldReturnCategory()
+     {
+         // Arrange
+         var category = new Category
+         {
+             Name = "Old"
+         };
+         _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
+             .ReturnsAsync(category);
+         
+         var sut = CreateSut();
+         
+         // Act
+         var result = await sut.GetByIdAsync(1);
+         
+         // ASSERT
+         Assert.Equal(category.Name, result.Name);
+     }
+     
+     [Fact]
+     public async Task CreateAsync_WhenNameIsExist_ShouldThrowsConflictException()
+     {
+         // Arrange
+         _uow.Setup(x => 
+                 x.Category.IsNameExistAsync(It.IsAny<string>()))
+             .ReturnsAsync(false);
+         
+         var sut = CreateSut();
+         
+         // Act & Assert
+         await Assert.ThrowsAsync<ConflictException>(() => sut.CreateAsync(ValidCategoryDto()));
+     }
+     
+     [Fact]
+     public async Task CreateAsync_WhenSuccessful_ShouldCreateCategoty()
+     {
+         // Arrange
+         _uow.Setup(x => 
+                 x.Category.IsNameExistAsync(It.IsAny<string>()))
+             .ReturnsAsync(true);
+         
+         _uow.Setup(x => 
+                 x.Category.Add(It.IsAny<Category>()));
+         
+         _uow.Setup(x => 
+             x.SaveChangesAsync());
+         
+         var sut = CreateSut();
+         
+         // Act
+         var dto = ValidCategoryDto();
+         var category = await sut.CreateAsync(dto);
+         
+         // Assert
+         Assert.Equal(dto.Name, category.Name);
+     }
+
+     [Fact]
+     public async Task UpdateAsync_WhenCategoryNotFound_ShouldThrowsNotFoundException()
+     {
+         // Arrange
+         _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
+             .ReturnsAsync((Category?)null);
+         
+         var sut = CreateSut();
+         
+         // Act & Assert
+         var dto = ValidCategoryDto();
+         await Assert.ThrowsAsync<NotFoundException>(() => sut.UpdateAsync(1, dto));
+     }
+     
+     [Fact]
+     public async Task UpdateAsync_WhenNameIsExist_ShouldThrowsConflictException()
+     {
+         // Arrange
+         _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
+             .ReturnsAsync(new Category());
+         
+         _uow.Setup(x => 
+                 x.Category.IsNameExistAsync(It.IsAny<string>()))
+             .ReturnsAsync(false);
+         
+         var sut = CreateSut();
+         
+         // Act & Assert
+         var dto = ValidCategoryDto();
+         await Assert.ThrowsAsync<ConflictException>(() => sut.UpdateAsync(1, dto));
+     }
+
+     [Fact]
+     public async Task UpdateAsync_WhenSuccessful_ShouldUpdateCategoty()
+     {
+         // Arrange
+         var category = new Category
+         {
+             Name = "Old"
+         };
+         
+         _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
+             .ReturnsAsync(category);
+         
+         _uow.Setup(x => 
+                 x.Category.IsNameExistAsync(It.IsAny<string>()))
+             .ReturnsAsync(true);
+         
+         var sut = CreateSut();
+         
+         // Act
+         var dto = ValidCategoryDto();
+         await sut.UpdateAsync(1, dto);
+         
+         // Assert
+         Assert.Equal(dto.Name, category.Name);
+     }
+     
+     [Fact]
+     public async Task DeleteAsync_WhenCategoryNotFound_ShouldThrowsNotFoundException()
+     {
+         // Arrange
+         _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
+             .ReturnsAsync((Category?)null);
+         
+         var sut = CreateSut();
+         
+         // Act & Assert
+         await Assert.ThrowsAsync<NotFoundException>(() => sut.DeleteAsync(1));
+     }
+     
+     [Fact]
+     public async Task DeleteAsync_WhenSuccessful_ShouldDeleteCategory()
+     {
+         // Arrange
+         var category = new Category
+         {
+             Id = 1,
+             Name = "C1"
+         };
+         _uow.Setup(x => x.Category.GetByIdAsync(It.IsAny<int>()))
+             .ReturnsAsync(category);
+         _uow.Setup(x => x.Category.Remove(It.IsAny<Category>()));
+         _uow.Setup(x => x.SaveChangesAsync())
+             .ReturnsAsync(1);
+         
+         var sut = CreateSut();
+         
+         // Act
+         await sut.DeleteAsync(1);
+         
+         // Assert
+         _uow.Verify(x => x.Category.Remove(category), Times.Once);
+         _uow.Verify(x => x.SaveChangesAsync(), Times.Once);
+     }
 }

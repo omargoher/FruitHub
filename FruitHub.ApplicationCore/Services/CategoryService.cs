@@ -69,11 +69,6 @@ public class CategoryService : ICategoryService
     
     public async Task UpdateAsync(int categoryId, CategoryDto dto)
     {
-        if (await _categoryRepo.IsNameExistAsync(dto.Name))
-        {
-            throw new ConflictException("Category");
-        }
-        
         var category = await _categoryRepo.GetByIdAsync(categoryId);
         
         if (category == null)
@@ -81,6 +76,11 @@ public class CategoryService : ICategoryService
             throw new NotFoundException("Category");
         }
         
+        if (await _categoryRepo.IsNameExistAsync(dto.Name))
+        {
+            throw new ConflictException("Category");
+        }
+
         category.Name = dto.Name;
         
         _categoryRepo.Update(category);
