@@ -11,7 +11,7 @@ public interface IProductService
     
     Task<IReadOnlyList<ProductResponseDto>> GetByCategoryAsync(int categoryId, ProductQuery productQuery);
     
-    Task CreateAsync(int adminId, CreateProductDto dto, ImageDto imageDto);
+    Task<SingleProductResponseDto> CreateAsync(int adminId, CreateProductDto dto, ImageDto imageDto);
     
     Task UpdateAsync(int id, UpdateProductDto dto, ImageDto? imageDto = null);
     

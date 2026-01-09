@@ -51,7 +51,7 @@ public class ProductService : IProductService
         return products;
     }
     
-    public async Task CreateAsync(int adminId, CreateProductDto dto, ImageDto image)
+    public async Task<SingleProductResponseDto> CreateAsync(int adminId, CreateProductDto dto, ImageDto image)
     {
         var admin = await _uow.Admin.GetByIdAsync(adminId);
         if (admin == null)
@@ -86,6 +86,22 @@ public class ProductService : IProductService
         
         _productRepo.Add(product);
         await _uow.SaveChangesAsync();
+
+        var response = new SingleProductResponseDto
+        {
+            Id = product.Id,
+            Name = dto.Name ,
+            Price = dto.Price,
+            Calories = dto.Calories,
+            Description = dto.Description,
+            Organic = dto.Organic,
+            ExpirationPeriodByDays = dto.ExpirationPeriodByDays,
+            Stock = dto.Stock,
+            ImageUrl = imageUrl,
+            CategoryId = dto.CategoryId,
+            CategoryName = category.Name,
+        };
+        return response;
     }
 
     public async Task UpdateAsync(int productId, UpdateProductDto dto, ImageDto? image = null)
