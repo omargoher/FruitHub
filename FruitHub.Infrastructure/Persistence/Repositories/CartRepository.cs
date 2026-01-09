@@ -11,7 +11,7 @@ public class CartRepository : GenericRepository<Cart, int>, ICartRepository
     {
     }
 
-    public async Task<IReadOnlyList<CartResponseDto>> GetByUserIdWithCartItemsAsync(int userId)
+    public async Task<CartResponseDto?> GetByUserIdWithCartItemsAsync(int userId)
     {
         return await _context.Carts
             .AsNoTracking()
@@ -26,7 +26,7 @@ public class CartRepository : GenericRepository<Cart, int>, ICartRepository
                     Price = ci.Product.Price
                 }).ToList(),
                 TotalPrice = c.Items.Sum(ci => ci.Quantity * ci.Product.Price)
-            }).ToListAsync();
+            }).FirstOrDefaultAsync();
     }
     
     public async Task<Cart?> GetByUserIdWithCartItemsAndProductsAsync(int userId)

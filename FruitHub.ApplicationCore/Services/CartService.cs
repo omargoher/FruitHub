@@ -22,14 +22,21 @@ public class CartService : ICartService
         _cartRepo = uow.Cart;
     }
 
-    public async Task<IReadOnlyList<CartResponseDto>> GetAllItemsAsync(int userId)
+    public async Task<CartResponseDto?> GetAllItemsAsync(int userId)
     {
         if (!await _userRepo.IsExistAsync(userId))
         {
             throw new NotFoundException("User");
         }
 
-        return await _cartRepo.GetByUserIdWithCartItemsAsync(userId);
+        var cart = await _cartRepo.GetByUserIdWithCartItemsAsync(userId);
+        
+        if (cart == null)
+        {
+            throw new NotFoundException("Cart");
+        }
+
+        return cart;
     }
 
     public async Task AddItemAsync(int userId, int productId, int quantity)
