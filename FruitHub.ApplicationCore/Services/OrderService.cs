@@ -7,8 +7,8 @@ using FruitHub.ApplicationCore.Models;
 
 namespace FruitHub.ApplicationCore.Services;
 
-public class 
-    OrderService : IOrderService
+
+public class OrderService : IOrderService
 {
     private readonly IUnitOfWork _uow;
     private readonly IUserRepository _userRepo;
@@ -41,7 +41,12 @@ public class
 
     public async Task<OrderResponseDto?> GetByIdAsync(int orderId)
     {
-        return await _orderRepo.GetByIdWithOrderItemsAsync(orderId);
+        var order =  await _orderRepo.GetByIdWithOrderItemsAsync(orderId);
+        if (order == null)
+        {
+            throw new NotFoundException("Order");
+        }
+        return order;
     }
 
     public async Task<OrderResponseDto?> GetByIdAsync(int userId, int orderId)
@@ -53,8 +58,11 @@ public class
 
         var order = await _orderRepo.GetByIdWithOrderItemsAsync(orderId);
 
-        if (order == null) return order;
-
+        if (order == null)
+        {
+            throw new NotFoundException("Order");
+        }
+        
         if (order.UserId != userId)
         {
             throw new ForbiddenException();
@@ -161,8 +169,16 @@ public class
         var order = await _orderRepo.GetByIdAsync(orderId);
 
         if (order == null)
+        {
             throw new NotFoundException("Order");
+        }
 
+        // you can not cancel order is already shipped
+        if (order.IsShipped)
+        {
+            throw new InvalidRequestException("Order Is Shipped Can not cancel it");
+        }
+        
         order.IsCanceled = true;
 
         // Id order is canceled so order can not be shipped or payed 
@@ -183,13 +199,19 @@ public class
         var order = await _orderRepo.GetByIdAsync(orderId);
 
         if (order == null)
+        {
             throw new NotFoundException("Order");
+        }
 
         if (order.UserId != userId)
         {
             throw new ForbiddenException();
         }
         
+        if (order.IsShipped)
+        {
+            throw new InvalidRequestException("Order Is Shipped Can not cancel it");
+        }
         order.IsCanceled = true;
 
         // Id order is canceled so order can not be shipped or payed 
