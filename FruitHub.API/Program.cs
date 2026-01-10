@@ -1,6 +1,7 @@
 using System.Text;
-using FruitHub.API.DTOs;
+using System.Text.Json.Serialization;
 using FruitHub.API.Middlewares;
+using FruitHub.API.Responses;
 using FruitHub.ApplicationCore.Errors;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Services;
@@ -10,7 +11,6 @@ using FruitHub.Infrastructure.Identity;
 using FruitHub.Infrastructure.Identity.Models;
 using FruitHub.Infrastructure.Identity.Repositories;
 using FruitHub.Infrastructure.Identity.Seeders;
-using FruitHub.Infrastructure.Interfaces;
 using FruitHub.Infrastructure.Interfaces.Repositories;
 using FruitHub.Infrastructure.Interfaces.Services;
 using FruitHub.Infrastructure.Persistence;
@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 namespace FruitHub.API;
 
@@ -30,9 +31,61 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.Converters.Add(
+                new JsonStringEnumConverter());
+        });
         builder.Services.AddOpenApi();
 
+        builder.Services.AddEndpointsApiExplorer(); 
+        
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "FruitHub API",
+                Version = "v1",
+                Description = "FruitHub is an e-commerce REST API for managing fruits, categories, carts, and orders.",
+                Contact = new OpenApiContact
+                {
+                    Name = "Omar Goher",
+                    Email = "omargoher59@gmail.com"
+                }
+            });
+            options.UseInlineDefinitionsForEnums();
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                Scheme = "Bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "Enter JWT token like: Bearer {your_token}"
+            });
+            
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+            
+            options.IncludeXmlComments(
+                Path.Combine(AppContext.BaseDirectory, "FruitHub.API.xml"));
+            
+            options.IncludeXmlComments(
+                Path.Combine(AppContext.BaseDirectory, "FruitHub.ApplicationCore.xml"));
+        });
+        
         // DB
         var connectionString = builder.Configuration.GetConnectionString("SqlServer");
         builder.Services.AddDbContext<ApplicationDbContext>(
@@ -100,6 +153,38 @@ public class Program
                             Encoding.UTF8.GetBytes(jwtOptions.SigningKey)
                         ),
                     };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnChallenge = context =>
+                        {
+                            context.HandleResponse();
+
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            context.Response.ContentType = "application/json";
+
+                            var response = new ErrorResponse
+                            {
+                                Message = "User is not authenticated.",
+                                Code = ErrorsCode.Unauthorized
+                            };
+
+                            return context.Response.WriteAsJsonAsync(response);
+                        },
+
+                        OnForbidden = context =>
+                        {
+                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            context.Response.ContentType = "application/json";
+
+                            var response = new ErrorResponse
+                            {
+                                Message = "User is not authorized to access this resource.",
+                                Code = ErrorsCode.Forbidden
+                            };
+
+                            return context.Response.WriteAsJsonAsync(response);
+                        }
+                    };
                 }
             );
         
@@ -164,6 +249,8 @@ public class Program
         {
             app.UseDeveloperExceptionPage();
             app.MapOpenApi();
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
 
         app.UseHttpsRedirection();

@@ -1,6 +1,6 @@
-namespace FruitHub.API.DTOs;
+namespace FruitHub.API.Responses;
 
-public class ValidationErrorDto
+public class ValidationError
 {
     public string Field { get; set; } = null!;
     public string Error { get; set; } = null!;

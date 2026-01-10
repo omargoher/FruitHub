@@ -14,5 +14,5 @@ public class ErrorsCode
     public const string InvalidRequest = "INVALID_REQUEST";
     public const string NotFound = "NOT_FOUND";
     public const string InvalidResetPasswordToken = "INVALID_RESET_PASSWORD_TOKEN";
-    public const string RegistrationFailed = "REGISTRATION_FAILED";
+    public const string InternalServer = "INTERNAL_SERVER";
 }

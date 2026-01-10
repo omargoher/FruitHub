@@ -1,4 +1,5 @@
-using FruitHub.API.DTOs;
+using FruitHub.API.Responses;
+using FruitHub.ApplicationCore.Errors;
 using FruitHub.ApplicationCore.Exceptions;
 
 namespace FruitHub.API.Middlewares;
@@ -46,12 +47,14 @@ public class ExceptionMiddleware
             {
                 IdentityOperationException identityEx => new ErrorResponse
                 {
+                    Code = identityEx.ErrorCode,
                     Message = identityEx.Message,
                     Errors = identityEx.Errors
                 },
 
                 _ => new ErrorResponse
                 {
+                    Code = appException.ErrorCode,
                     Message = appException.Message
                 }
             };
@@ -62,6 +65,7 @@ public class ExceptionMiddleware
 
             response = new ErrorResponse
             {
+                Code = ErrorsCode.InternalServer,
                 Message = "Internal server error"
             };
         }
