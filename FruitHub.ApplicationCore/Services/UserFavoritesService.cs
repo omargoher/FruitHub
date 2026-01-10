@@ -53,7 +53,7 @@ public class UserFavoritesService : IUserFavoritesService
     {
         if (!await _userFavoritesRepo.IsExistAsync(userId, productId))
         {
-            return;
+            throw new NotFoundException("Product");
         }
         
         _userFavoritesRepo.Remove(userId, productId);
