@@ -3,6 +3,7 @@ using System.Security.Claims;
 using FruitHub.ApplicationCore.DTOs.Auth.Login;
 using FruitHub.ApplicationCore.DTOs.Auth.Refresh;
 using FruitHub.ApplicationCore.DTOs.Auth.Register;
+using FruitHub.ApplicationCore.DTOs.User;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Models;
@@ -29,7 +30,7 @@ public class JwtAuthService : IAuthService
         _identityUserRepo = identityUserRepo;
     }
     
-    public async Task<User> RegisterAsync(RegisterDto registerDto)
+    public async Task<UserProfileDto> RegisterAsync(RegisterDto registerDto)
     {
         ApplicationUser? identityUser = null;
         
@@ -88,7 +89,13 @@ public class JwtAuthService : IAuthService
                     identityResult.Errors.Select(e => e.Description));
             }
 
-            return businessUser;
+            var response = new UserProfileDto
+            {
+                Id = businessUser.Id,
+                FullName = businessUser.FullName,
+                Email = businessUser.Email
+            };
+            return response;
         }
         catch
         {
