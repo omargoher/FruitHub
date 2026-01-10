@@ -3,11 +3,11 @@ obj/
 .vs/
 .idea/
 images/
+storage/
 *.user
 *.suo
 *.cache
 *.log
 *.db*
 .env
-./FruitHub.API/storage
 appsettings.Development.json
