@@ -6,7 +6,7 @@ using FruitHub.ApplicationCore.DTOs.Auth.Register;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Models;
-using FruitHub.Infrastructure.DTOs;
+using FruitHub.Infrastructure.Models;
 using FruitHub.Infrastructure.Identity;
 using FruitHub.Infrastructure.Identity.Models;
 using FruitHub.Infrastructure.Interfaces;
@@ -430,7 +430,7 @@ public class JwtAuthServiceTest
             .ReturnsAsync(new JwtSecurityToken());
         
         _tokenService.Setup(x => x.CreateRefreshTokenAsync(It.IsAny<ApplicationUser>(), null))
-            .ReturnsAsync(new RefreshTokenDto {Token = "Valid"});
+            .ReturnsAsync(new RefreshTokenModel {Token = "Valid"});
         
         var sut = CreateSut();
     
@@ -461,7 +461,7 @@ public class JwtAuthServiceTest
             .ReturnsAsync(new JwtSecurityToken());
         
         _tokenService.Setup(x => x.CreateRefreshTokenAsync(It.IsAny<ApplicationUser>(), null))
-            .ReturnsAsync(new RefreshTokenDto {Token = "Valid"});
+            .ReturnsAsync(new RefreshTokenModel {Token = "Valid"});
         
         var sut = CreateSut();
         
@@ -532,7 +532,7 @@ public class JwtAuthServiceTest
             .ReturnsAsync(new ApplicationUser());
 
         _tokenService.Setup(x => x.CreateRefreshTokenAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-            .ReturnsAsync(new RefreshTokenDto { Token = "newToken" });
+            .ReturnsAsync(new RefreshTokenModel { Token = "newToken" });
         
         _tokenService.Setup(x => x.GenerateJwtAsync(It.IsAny<ApplicationUser>()))
             .ThrowsAsync(new Exception());
@@ -553,7 +553,7 @@ public class JwtAuthServiceTest
             .ReturnsAsync(new ApplicationUser());
 
         _tokenService.Setup(x => x.CreateRefreshTokenAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-            .ReturnsAsync(new RefreshTokenDto { Token = "newToken" });
+            .ReturnsAsync(new RefreshTokenModel { Token = "newToken" });
         
         _tokenService
             .Setup(x => x.GenerateJwtAsync(It.IsAny<ApplicationUser>()))
@@ -577,7 +577,7 @@ public class JwtAuthServiceTest
             .ReturnsAsync(new ApplicationUser());
 
         _tokenService.Setup(x => x.CreateRefreshTokenAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
-            .ReturnsAsync(new RefreshTokenDto { Token = "newToken" });
+            .ReturnsAsync(new RefreshTokenModel { Token = "newToken" });
         
         _tokenService
             .Setup(x => x.GenerateJwtAsync(It.IsAny<ApplicationUser>()))

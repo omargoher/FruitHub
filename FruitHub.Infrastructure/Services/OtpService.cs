@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using FruitHub.Infrastructure.DTOs;
+using FruitHub.Infrastructure.Models;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.Infrastructure.Interfaces;
 using FruitHub.Infrastructure.Interfaces.Services;

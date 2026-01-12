@@ -2,7 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using FruitHub.Infrastructure.DTOs;
+using FruitHub.Infrastructure.Models;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Options;
 using FruitHub.Infrastructure.Identity.Models;
@@ -72,7 +72,7 @@ public class TokenService : ITokenService
         return securityToken;
     }
 
-    public async Task<RefreshTokenDto> CreateRefreshTokenAsync(ApplicationUser user, string? refreshToken = null)
+    public async Task<RefreshTokenModel> CreateRefreshTokenAsync(ApplicationUser user, string? refreshToken = null)
     {
         // Check if token is valid and Revoke It
         if (refreshToken != null)
@@ -89,7 +89,7 @@ public class TokenService : ITokenService
         
         var token = GenerateRefreshToken();
 
-        var newRefreshToken = new RefreshTokenDto()
+        var newRefreshToken = new RefreshTokenModel()
         {
             Token = token,
             ExpiresAt = DateTime.UtcNow.AddDays(_rToken.Lifetime),

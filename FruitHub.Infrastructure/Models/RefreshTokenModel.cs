@@ -1,6 +1,6 @@
-namespace FruitHub.Infrastructure.DTOs;
+namespace FruitHub.Infrastructure.Models;
 
-public class RefreshTokenDto
+public class RefreshTokenModel
 {
     public string Token { get; set; } = null!;
     public DateTime ExpiresAt { get; set; }

@@ -1,4 +1,4 @@
-namespace FruitHub.Infrastructure.DTOs;
+namespace FruitHub.Infrastructure.Models;
 
 public class OtpCacheModel
 {
