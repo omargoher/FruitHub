@@ -236,6 +236,15 @@ public class Program
         
         var app = builder.Build();
         
+        // Apply pending migrations automatically
+        using (var scope = app.Services.CreateScope())
+        {
+            var identity = scope.ServiceProvider.GetRequiredService<AppIdentityDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            identity.Database.Migrate();
+            db.Database.Migrate();
+        }
+        
         // Seed Data
         using (var scope = app.Services.CreateScope())
         {
@@ -245,14 +254,11 @@ public class Program
         }
         
         // Middleware pipeline
-        if (app.Environment.IsDevelopment())
-        {
-            app.UseDeveloperExceptionPage();
-            app.MapOpenApi();
-            app.UseSwagger();
-            app.UseSwaggerUI();
-        }
-
+        
+        app.MapOpenApi();
+        app.UseSwagger();
+        app.UseSwaggerUI();
+            
         app.UseHttpsRedirection();
 
         /*

@@ -6,21 +6,24 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <NoWarn>$(NoWarn);1591</NoWarn>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
-<!--        JWT Token validation-->
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.11"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\FruitHub.Infrastructure\FruitHub.Infrastructure.csproj" />
-    </ItemGroup>
 
     <ItemGroup>
       <Folder Include="Configuration\" />
+    </ItemGroup>
+
+
+    <ItemGroup>
+      <ProjectReference Include="..\FruitHub.ApplicationCore\FruitHub.ApplicationCore.csproj" />
+      <ProjectReference Include="..\FruitHub.Infrastructure\FruitHub.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>
