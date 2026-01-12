@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace FruitHub.ApplicationCore.DTOs.Order;
 
-public class CheckoutDto
+public class CreateOrderDto
 {
     [Required]
     [StringLength(100, MinimumLength = 3)]

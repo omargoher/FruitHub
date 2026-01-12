@@ -20,16 +20,16 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
             query = filter.Status switch
             {
                 OrderStatus.Pending =>
-                    query.Where(o => !o.IsPayed && !o.IsShipped),
-
-                OrderStatus.Paid =>
-                    query.Where(o => o.IsPayed),
+                    query.Where(o => o.OrderStatus == OrderStatus.Pending),
 
                 OrderStatus.Shipped =>
-                    query.Where(o => o.IsShipped),
+                    query.Where(o => o.OrderStatus == OrderStatus.Shipped),
 
+                OrderStatus.Delivered =>
+                    query.Where(o => o.OrderStatus == OrderStatus.Delivered),
+                
                 OrderStatus.Cancelled =>
-                    query.Where(o => o.IsCanceled),
+                    query.Where(o => o.OrderStatus == OrderStatus.Cancelled),
 
                 _ => query
             };
@@ -64,8 +64,8 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
                 : query.OrderByDescending(o => o.ShippingFees),
             
             OrderSortBy.Status => (sortDir == SortDirection.Asc)
-                ? query.OrderBy(o => o.IsPayed).ThenBy(o => o.IsShipped)
-                : query.OrderByDescending(o => o.IsPayed).ThenByDescending(o => o.IsShipped),
+                ? query.OrderBy(o => o.OrderStatus)
+                : query.OrderByDescending(o => o.OrderStatus),
             
             _ => query.OrderBy(o => o.Id)
         };
@@ -99,9 +99,7 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
             SubPrice = o.SubPrice,
             TotalPrice = o.TotalPrice,
             ShippingFees = o.ShippingFees,
-            IsShipped = o.IsShipped,
-            IsPayed = o.IsPayed,
-            IsCanceled = o.IsCanceled,
+            OrderStatus = o.OrderStatus,
             Items = o.Items.Select(oi => new OrderItemResponseDto
             {
                 ProductId = oi.ProductId,
@@ -132,9 +130,7 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
             SubPrice = o.SubPrice,
             TotalPrice = o.TotalPrice,
             ShippingFees = o.ShippingFees,
-            IsShipped = o.IsShipped,
-            IsPayed = o.IsPayed, 
-            IsCanceled = o.IsCanceled,
+            OrderStatus = o.OrderStatus,
             Items = o.Items.Select(oi => new OrderItemResponseDto
             {
                 ProductId = oi.ProductId,
@@ -160,9 +156,7 @@ public class OrderRepository : GenericRepository<Order, int>, IOrderRepository
                 SubPrice = o.SubPrice,
                 TotalPrice = o.TotalPrice,
                 ShippingFees = o.ShippingFees,
-                IsShipped = o.IsShipped,
-                IsPayed = o.IsPayed,
-                IsCanceled = o.IsCanceled,
+                OrderStatus = o.OrderStatus,
                 Items = o.Items.Select(oi => new OrderItemResponseDto
                 {
                     ProductId = oi.ProductId,

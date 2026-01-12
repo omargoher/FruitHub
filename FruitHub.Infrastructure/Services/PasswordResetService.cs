@@ -37,7 +37,7 @@ public class PasswordResetService : IPasswordResetService
 
         if (user == null)
         {
-            return;
+            throw new NotFoundException("User");
         }
         
         var key = $"{ForgetPasswordKey}:{dto.Email}";

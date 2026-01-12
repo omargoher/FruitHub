@@ -1,4 +1,5 @@
 using FruitHub.ApplicationCore.DTOs.Order;
+using FruitHub.ApplicationCore.Enums.Order;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Repository;
@@ -29,121 +30,20 @@ public class OrderServiceTest
     }
 
     private OrderService CreateSut() => new OrderService(_uow.Object);
-
     
     [Fact]
-    public async Task GetAllAsync_WhenCalled_ShouldReturnOrders()
-    {
-        var orders = new List<OrderResponseDto>
-        {
-            new OrderResponseDto
-            {
-                OrderId = 1,
-            }
-        };
-
-        _orderRepo.Setup(x => x.GetAllWithOrderItemsAsync(It.IsAny<OrderQuery>()))
-                  .ReturnsAsync(orders);
-
-        var sut = CreateSut();
-
-        var result = await sut.GetAllAsync(new OrderQuery());
-
-        Assert.Equal(orders, result);
-    }
-
-    
-    [Fact]
-    public async Task GetAllForUserAsync_WhenUserNotFound_ShouldThrowNotFoundException()
+    public async Task CreateAsync_WhenUserNotFound_ShouldThrowNotFoundException()
     {
         _userRepo.Setup(x => x.IsExistAsync(1)).ReturnsAsync(false);
 
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<NotFoundException>(() =>
-            sut.GetAllForUserAsync(1, new OrderQuery()));
+            sut.CreateAsync(1, new CreateOrderDto()));
     }
 
     [Fact]
-    public async Task GetAllForUserAsync_WhenUserExists_ShouldReturnOrders()
-    {
-        _userRepo.Setup(x => x.IsExistAsync(1)).ReturnsAsync(true);
-
-        var orders = new List<OrderResponseDto>
-        {
-            new OrderResponseDto
-            {
-                OrderId = 1,
-            }
-        };
-
-        _orderRepo.Setup(x =>
-                x.GetByUserIdWithOrderItemsAsync(1, It.IsAny<OrderQuery>()))
-            .ReturnsAsync(orders);
-
-        var sut = CreateSut();
-
-        var result = await sut.GetAllForUserAsync(1, new OrderQuery());
-
-        Assert.Equal(orders, result);
-    }
-
-   // Admin
-    [Fact]
-    public async Task GetByIdAsync_WhenOrderExists_ShouldReturnOrder()
-    {
-        var order = new OrderResponseDto { OrderId = 1 };
-
-        _orderRepo.Setup(x => x.GetByIdWithOrderItemsAsync(1))
-                  .ReturnsAsync(order);
-
-        var sut = CreateSut();
-
-        var result = await sut.GetByIdAsync(1);
-
-        Assert.Equal(order, result);
-    }
-    
-    // User
-    [Fact]
-    public async Task GetByIdAsync_WhenUserNotFound_ShouldThrowNotFoundException()
-    {
-        _userRepo.Setup(x => x.IsExistAsync(1)).ReturnsAsync(false);
-
-        var sut = CreateSut();
-
-        await Assert.ThrowsAsync<NotFoundException>(() =>
-            sut.GetByIdAsync(1, 10));
-    }
-
-    [Fact]
-    public async Task GetByIdAsync_WhenOrderBelongsToAnotherUser_ShouldThrowForbiddenException()
-    {
-        _userRepo.Setup(x => x.IsExistAsync(1)).ReturnsAsync(true);
-
-        _orderRepo.Setup(x => x.GetByIdWithOrderItemsAsync(10))
-                  .ReturnsAsync(new OrderResponseDto { OrderId = 10, UserId = 2 });
-
-        var sut = CreateSut();
-
-        await Assert.ThrowsAsync<ForbiddenException>(() =>
-            sut.GetByIdAsync(1, 10));
-    }
-
-    
-    [Fact]
-    public async Task CheckoutAsync_WhenUserNotFound_ShouldThrowNotFoundException()
-    {
-        _userRepo.Setup(x => x.IsExistAsync(1)).ReturnsAsync(false);
-
-        var sut = CreateSut();
-
-        await Assert.ThrowsAsync<NotFoundException>(() =>
-            sut.CheckoutAsync(1, new CheckoutDto()));
-    }
-
-    [Fact]
-    public async Task CheckoutAsync_WhenCartIsEmpty_ShouldThrowInvalidRequestException()
+    public async Task CreateAsync_WhenCartIsEmpty_ShouldThrowInvalidRequestException()
     {
         _userRepo.Setup(x => x.IsExistAsync(1)).ReturnsAsync(true);
         _cartRepo.Setup(x => x.GetByUserIdWithCartItemsAndProductsAsync(1))
@@ -152,11 +52,11 @@ public class OrderServiceTest
         var sut = CreateSut();
 
         await Assert.ThrowsAsync<InvalidRequestException>(() =>
-            sut.CheckoutAsync(1, new CheckoutDto()));
+            sut.CreateAsync(1, new CreateOrderDto()));
     }
 
     [Fact]
-    public async Task CheckoutAsync_WhenProductStockIsInsufficient_ShouldThrowInvalidRequestException()
+    public async Task CreateAsync_WhenProductStockIsInsufficient_ShouldThrowInvalidRequestException()
     {
         // Arrange
         var product = new Product
@@ -190,18 +90,18 @@ public class OrderServiceTest
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidRequestException>(() =>
-            sut.CheckoutAsync(1, new CheckoutDto()));
+            sut.CreateAsync(1, new CreateOrderDto()));
     }
 
     [Fact]
-    public async Task CheckoutAsync_WhenValid_ShouldCreateOrderAndClearCart()
+    public async Task CreateAsync_WhenValid_ShouldCreateOrderAndClearCart()
     {
-        var product = new Product { Id = 1, Stock = 10, Price = 20 };
+        var product = new Product { Id = 1,Name = "p1", Stock = 10, Price = 20 };
         var cart = new Cart
         {
             Items = new List<CartItem>
             {
-                new() { ProductId = 1, Quantity = 2, Product = product }
+                new CartItem { ProductId = 1, Quantity = 2, Product = product }
             }
         };
 
@@ -212,7 +112,7 @@ public class OrderServiceTest
 
         var sut = CreateSut();
 
-        await sut.CheckoutAsync(1, new CheckoutDto
+        await sut.CreateAsync(1, new CreateOrderDto
         {
             CustomerFullName = "Omar",
             CustomerAddress = "Cairo"
@@ -223,156 +123,59 @@ public class OrderServiceTest
     }
     
     [Fact]
-    public async Task ChangeOrderStatusAsync_WhenOrderNotFound_ShouldThrowNotFoundException()
+    public async Task UpdateStatusAsync_WhenOrderNotFound_ShouldThrowNotFoundException()
     {
+        // Arrange
         _orderRepo.Setup(x => x.GetByIdAsync(1))
                   .ReturnsAsync((Order?)null);
 
         var sut = CreateSut();
 
+        // ACT & Assert
         await Assert.ThrowsAsync<NotFoundException>(() =>
-            sut.ChangeOrderStatusAsync(1, new ChangeOrderStatusDto()));
+            sut.UpdateStatusAsync(1, new UpdateOrderStatusDto()));
     }
 
     [Fact]
-    public async Task ChangeOrderStatusAsync_WhenShippedAndNotPayed_ShouldThrowInvalidRequestException()
-    {
-        _orderRepo.Setup(x => x.GetByIdAsync(1))
-                  .ReturnsAsync(new Order());
-
-        var sut = CreateSut();
-
-        await Assert.ThrowsAsync<InvalidRequestException>(() =>
-            sut.ChangeOrderStatusAsync(1,
-                new ChangeOrderStatusDto { IsShipped = true, IsPayed = false }));
-    }
-
-    [Fact]
-    public async Task ChangeOrderStatusAsync_WhenShippedTrue_ShouldAlsoSetPayedTrue()
+    public async Task UpdateStatusAsync_WhenValidTransition_ShouldUpdatesOrder()
     {
         // Arrange
-        var order = new Order
-        {
-            IsShipped = false,
-            IsPayed = false
-        };
-
+        var order = new Order();
+        order.UserId = 1;
+        order.ChangeStatus(OrderStatus.Shipped);
+        
         _orderRepo.Setup(x => x.GetByIdAsync(1))
-            .ReturnsAsync(order);
-
-        _uow.Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1);
-
-        var dto = new ChangeOrderStatusDto
-        {
-            IsShipped = true
-        };
+                  .ReturnsAsync(order);
 
         var sut = CreateSut();
 
-        // Act
-        await sut.ChangeOrderStatusAsync(1, dto);
-
+        // ACT
+        await sut.UpdateStatusAsync(1, new UpdateOrderStatusDto {OrderStatus = OrderStatus.Delivered});
+        
         // Assert
-        Assert.True(order.IsShipped);
-        Assert.True(order.IsPayed);
-    }
-
-    [Fact]
-    public async Task ChangeOrderStatusAsync_WhenPayedFalse_ShouldSetShippedFalse()
-    {
-        // Arrange
-        var order = new Order
-        {
-            IsPayed = true,
-            IsShipped = true
-        };
-
-        _orderRepo.Setup(x => x.GetByIdAsync(1))
-            .ReturnsAsync(order);
-
-        _uow.Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1);
-
-        var dto = new ChangeOrderStatusDto
-        {
-            IsPayed = false
-        };
-
-        var sut = CreateSut();
-
-        // Act
-        await sut.ChangeOrderStatusAsync(1, dto);
-
-        // Assert
-        Assert.False(order.IsPayed);
-        Assert.False(order.IsShipped);
-    }
-
-    [Fact]
-    public async Task ChangeOrderStatusAsync_WhenPayedTrue_ShouldNotForceShippedTrue()
-    {
-        // Arrange
-        var order = new Order
-        {
-            IsPayed = false,
-            IsShipped = false
-        };
-
-        _orderRepo.Setup(x => x.GetByIdAsync(1))
-            .ReturnsAsync(order);
-
-        _uow.Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1);
-
-        var dto = new ChangeOrderStatusDto
-        {
-            IsPayed = true
-        };
-
-        var sut = CreateSut();
-
-        // Act
-        await sut.ChangeOrderStatusAsync(1, dto);
-
-        // Assert
-        Assert.True(order.IsPayed);
-        Assert.False(order.IsShipped);
-    }
-
-    
-    // admin
-    [Fact]
-    public async Task CancelOrderAsync_WhenOrderNotExists_ShouldThrowNotFoundException()
-    {
-        _orderRepo.Setup(x => x.GetByIdAsync(1)).ReturnsAsync((Order?)null);
-
-        var sut = CreateSut();
-
-        await Assert.ThrowsAsync<NotFoundException>(() =>
-            sut.CancelOrderAsync(1));
+        Assert.Equal(OrderStatus.Delivered, order.OrderStatus);
     }
     
     [Fact]
-    public async Task CancelOrderAsync_WhenOrderExists_ShouldCancelOrder()
+    public async Task UpdateStatusAsync_WhenInValidTransition_ShouldThrowDomainException()
     {
-        var order = new Order { IsPayed = true, IsShipped = true };
-
-        _orderRepo.Setup(x => x.GetByIdAsync(1)).ReturnsAsync(order);
-        _uow.Setup(x => x.SaveChangesAsync()).ReturnsAsync(1);
+        // Arrange
+        var order = new Order();
+        order.UserId = 1;
+        order.ChangeStatus(OrderStatus.Shipped);
+        
+        _orderRepo.Setup(x => x.GetByIdAsync(1))
+            .ReturnsAsync(order);
 
         var sut = CreateSut();
 
-        await sut.CancelOrderAsync(1);
-
-        Assert.True(order.IsCanceled);
-        Assert.False(order.IsPayed);
-        Assert.False(order.IsShipped);
+        // ACT & Assert
+        await Assert.ThrowsAsync<DomainException>(() =>
+            sut.UpdateStatusAsync(1, new UpdateOrderStatusDto {OrderStatus = OrderStatus.Pending}));
     }
-
-    // user
+    
     [Fact]
-    public async Task CancelOrderAsync_WhenUserNotFound_ShouldThrowNotFoundException()
+    public async Task CancelAsync_WhenUserNotFound_ShouldThrowNotFoundException()
     {
         // Arrange
         _userRepo.Setup(x => x.IsExistAsync(1))
@@ -382,11 +185,11 @@ public class OrderServiceTest
 
         // Act & Assert
         await Assert.ThrowsAsync<NotFoundException>(() =>
-            sut.CancelOrderAsync(1, 10));
+            sut.CancelAsync(1, 10));
     }
 
     [Fact]
-    public async Task CancelOrderAsync_WhenOrderNotFound_ShouldThrowNotFoundException()
+    public async Task CancelAsync_WhenOrderNotFound_ShouldThrowNotFoundException()
     {
         // Arrange
         _userRepo.Setup(x => x.IsExistAsync(1))
@@ -399,53 +202,60 @@ public class OrderServiceTest
 
         // Act & Assert
         await Assert.ThrowsAsync<NotFoundException>(() =>
-            sut.CancelOrderAsync(1, 10));
+            sut.CancelAsync(1, 10));
     }
 
     [Fact]
-    public async Task CancelOrderAsync_WhenOrderBelongsToAnotherUser_ShouldThrowForbiddenException()
+    public async Task CancelAsync_WhenOrderBelongsToAnotherUser_ShouldThrowForbiddenException()
     {
+        // Arrange
         _userRepo.Setup(x => x.IsExistAsync(1)).ReturnsAsync(true);
         _orderRepo.Setup(x => x.GetByIdAsync(10))
                   .ReturnsAsync(new Order { UserId = 2 });
 
         var sut = CreateSut();
 
+        // ACT & Assert
         await Assert.ThrowsAsync<ForbiddenException>(() =>
-            sut.CancelOrderAsync(1, 10));
+            sut.CancelAsync(1, 10));
     }
-    
+   
     [Fact]
-    public async Task CancelOrderAsync_WhenValid_ShouldCancelOrderAndResetState()
+    public async Task CancelAsync_WhenOrderStatusNotPending_ShouldThrowDomainException()
     {
         // Arrange
-        var order = new Order
-        {
-            Id = 10,
-            UserId = 1,
-            IsCanceled = false,
-            IsShipped = false,
-            IsPayed = false
-        };
-
-        _userRepo.Setup(x => x.IsExistAsync(1))
-            .ReturnsAsync(true);
-
+        var order = new Order();
+        order.UserId = 1;
+        order.ChangeStatus(OrderStatus.Shipped);
+        
+        _userRepo.Setup(x => x.IsExistAsync(1)).ReturnsAsync(true);
         _orderRepo.Setup(x => x.GetByIdAsync(10))
             .ReturnsAsync(order);
 
-        _uow.Setup(x => x.SaveChangesAsync())
-            .ReturnsAsync(1);
+        var sut = CreateSut();
+
+        // ACT & Assert
+        await Assert.ThrowsAsync<DomainException>(() =>
+            sut.CancelAsync(1, 10));
+    }
+    
+    [Fact]
+    public async Task CancelAsync_WhenOrderStatusIsPending_ShouldCancelTheOrder()
+    {
+        // Arrange
+        var order = new Order();
+        order.UserId = 1;
+        
+        _userRepo.Setup(x => x.IsExistAsync(1)).ReturnsAsync(true);
+        _orderRepo.Setup(x => x.GetByIdAsync(10))
+            .ReturnsAsync(order);
 
         var sut = CreateSut();
 
-        // Act
-        await sut.CancelOrderAsync(1, 10);
-
+        // ACT
+        await sut.CancelAsync(1, 10);
+        
         // Assert
-        Assert.True(order.IsCanceled);
-        Assert.False(order.IsShipped);
-        Assert.False(order.IsPayed);
+        Assert.Equal(OrderStatus.Cancelled, order.OrderStatus);
     }
-
 }

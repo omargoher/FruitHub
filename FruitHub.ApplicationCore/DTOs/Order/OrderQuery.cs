@@ -43,10 +43,9 @@ public class OrderQuery
     /// </summary>
     /// <remarks>
     /// Possible values depend on <see cref="OrderSortBy"/> enum
-    /// (e.g., CreatedAt, TotalPrice, Status).
     /// </remarks>
     /// <example>CreatedAt</example>
-    [EnumDataType(typeof(ProductSortBy))]
+    [EnumDataType(typeof(OrderSortBy))]
     public OrderSortBy? SortBy { get; set; }
     
     /// <summary>

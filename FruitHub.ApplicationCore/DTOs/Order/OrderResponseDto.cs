@@ -1,3 +1,4 @@
+using FruitHub.ApplicationCore.Enums.Order;
 using FruitHub.ApplicationCore.Models;
 
 namespace FruitHub.ApplicationCore.DTOs.Order;
@@ -14,8 +15,6 @@ public class OrderResponseDto
     public decimal SubPrice { get; set; } 
     public decimal TotalPrice { get; set; }
     public decimal ShippingFees { get; set; }
-    public bool IsShipped { get; set; }
-    public bool IsPayed { get; set; }
-    public bool IsCanceled { get; set; }
+    public OrderStatus OrderStatus { get; set; }
     public IReadOnlyList<OrderItemResponseDto> Items { get; set; } = [];
 }

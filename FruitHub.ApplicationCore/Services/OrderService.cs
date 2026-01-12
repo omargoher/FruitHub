@@ -1,4 +1,5 @@
 using FruitHub.ApplicationCore.DTOs.Order;
+using FruitHub.ApplicationCore.Enums.Order;
 using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Interfaces.Repository;
@@ -28,7 +29,7 @@ public class OrderService : IOrderService
         return await _orderRepo.GetAllWithOrderItemsAsync(query);
     }
     
-    public async Task<IReadOnlyList<OrderResponseDto>> GetAllForUserAsync(int userId, OrderQuery query)
+    public async Task<IReadOnlyList<OrderResponseDto>> GetAllAsync(int userId, OrderQuery query)
     {
         if (!await _userRepo.IsExistAsync(userId))
         {
@@ -71,7 +72,7 @@ public class OrderService : IOrderService
         return order;
     }
 
-    public async Task CheckoutAsync(int userId, CheckoutDto dto)
+    public async Task<OrderResponseDto> CreateAsync(int userId, CreateOrderDto dto)
     {
         if (!await _userRepo.IsExistAsync(userId))
         {
@@ -99,6 +100,7 @@ public class OrderService : IOrderService
                 ProductId = item.ProductId,
                 Quantity = item.Quantity,
                 PricePerPiece = item.Product.Price,
+                Product = item.Product,
             });
 
             item.Product.Stock -= item.Quantity;
@@ -119,77 +121,53 @@ public class OrderService : IOrderService
         cart.Items.Clear();
         
         await _uow.SaveChangesAsync();
-    }
 
-    // The user pays when the order is delivered in current business logic 
-    public async Task ChangeOrderStatusAsync(int orderId, ChangeOrderStatusDto dto)
+        return new OrderResponseDto
+        {
+            OrderId = order.Id,
+            UserId = order.UserId,
+            CustomerFullName = order.CustomerFullName,
+            CustomerAddress = order.CustomerAddress,
+            CustomerCity = order.CustomerCity,
+            CustomerDepartment = order.CustomerDepartment,
+            CustomerPhoneNumber = order.CustomerPhoneNumber,
+            SubPrice = order.SubPrice,
+            TotalPrice = order.TotalPrice,
+            ShippingFees = order.ShippingFees,
+            OrderStatus = order.OrderStatus,
+            Items = order.Items.Select(oi => new OrderItemResponseDto
+            {
+                ProductId = oi.ProductId,
+                Quantity = oi.Quantity,
+                ProductName = oi.Product.Name,
+                PricePerPiece = oi.PricePerPiece
+            }).ToList()
+        };
+    }
+    
+    public async Task UpdateStatusAsync(int orderId, UpdateOrderStatusDto dto)
     {
         var order = await _orderRepo.GetByIdAsync(orderId);
-
         if (order == null)
         {
             throw new NotFoundException("Order");
         }
-
-        if (dto.IsShipped.HasValue && dto.IsPayed.HasValue)
-        {
-            if (dto.IsShipped.Value && !dto.IsPayed.Value)
-            {
-                throw new InvalidRequestException("Order Can not be shipped and not payed");
-            }
-        }
-
-        if (dto.IsShipped.HasValue)
-        {
-            order.IsShipped = dto.IsShipped.Value;
-
-            // Is order Is Shipped so should be Is Payed but 
-            if (order.IsShipped)
-            {
-                order.IsPayed = true;
-            }
-        }
-        if (dto.IsPayed.HasValue)
-        {
-            order.IsPayed = dto.IsPayed.Value;
-
-            // if order not payed yet so can not be shipped
-            if (!order.IsPayed)
-            {
-                order.IsShipped = false;
-            }
-        }
-
-        _orderRepo.Update(order);
-        await _uow.SaveChangesAsync();
-    }
-
-    public async Task CancelOrderAsync(int orderId)
-    {
-        var order = await _orderRepo.GetByIdAsync(orderId);
-
-        if (order == null)
-        {
-            throw new NotFoundException("Order");
-        }
-
-        // you can not cancel order is already shipped
-        if (order.IsShipped)
-        {
-            throw new InvalidRequestException("Order Is Shipped Can not cancel it");
-        }
         
-        order.IsCanceled = true;
-
-        // Id order is canceled so order can not be shipped or payed 
-        order.IsShipped = false;
-        order.IsPayed = false;
+        var currentStatus = order.OrderStatus;
+        var targetStatus = dto.OrderStatus;
         
+        if (currentStatus == targetStatus)
+        {
+            return;
+        }
+
+        order.ChangeStatus(targetStatus);
+
         _orderRepo.Update(order);
         await _uow.SaveChangesAsync();
     }
     
-    public async Task CancelOrderAsync(int userId, int orderId)
+    public async Task CancelAsync(int userId, int orderId)
     {
         if (!await _userRepo.IsExistAsync(userId))
         {
@@ -202,21 +180,13 @@ public class OrderService : IOrderService
         {
             throw new NotFoundException("Order");
         }
-
+        
         if (order.UserId != userId)
         {
             throw new ForbiddenException();
         }
-        
-        if (order.IsShipped)
-        {
-            throw new InvalidRequestException("Order Is Shipped Can not cancel it");
-        }
-        order.IsCanceled = true;
 
-        // Id order is canceled so order can not be shipped or payed 
-        order.IsShipped = false;
-        order.IsPayed = false;
+        order.Cancel();
         
         _orderRepo.Update(order);
         await _uow.SaveChangesAsync();
