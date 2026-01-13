@@ -1,47 +1,49 @@
 # FruitHub API
 
 ## Overview
-**FruitHub** is a RESTful e-commerce backend API for managing **products, categories, carts, orders, and users**.
+**FruitHub** is a RESTful e-commerce backend API for managing **users, products, categories, carts, favorites, and orders**.
 
-This API is designed to be consumed by **mobile applications** and implements the business rules and functional requirements defined in the **Fruits Hub mobile app:**
-[Link](https://github.com/1-abdelrahman-khalil-1/Fruits-Hub-App)
+The API is designed primarily for **mobile applications** and implements the business rules defined in the **FruitHub Mobile App**:  
+[https://github.com/1-abdelrahman-khalil-1/Fruits-Hub-App](https://github.com/1-abdelrahman-khalil-1/Fruits-Hub-App)
 
-The project is built using **Clean Architecture**, with **JWT + Refresh Token authentication** and **role-based authorization**.
+The project follows **Clean Architecture principles**, uses **JWT + Refresh Tokens** for authentication, and enforces **role-based authorization**.
 
-## Live API
-The API is deployed and publicly accessible.
+---
 
-Base URL:
-https://your-deployed-api-url
-
-Swagger documentation:
-https://your-deployed-api-url/swagger
-Swagger provides full API documentation, request/response examples, and authentication support.
-
-## Features
-- User registration & authentication (JWT + refresh tokens)
+## Core Features
+- User registration and authentication
+- JWT access tokens with refresh token rotation
 - Role-based authorization (Admin / User)
 - Product and category management
-- Filtering, pagination, and sorting for products and orders
-- Favorite List 
-- Shopping cart & order workflow
+- Favorites (wishlist) support
+- Shopping cart management
+- Order lifecycle (checkout, status updates)
+- Filtering, sorting, and pagination for products and orders
 - Centralized exception handling
-- Input validation and meaningful error responses
+- Consistent and meaningful API error responses
 - Unit testing for core business logic
 
+---
+
 ## Tech Stack
-- Backend: ASP.NET Core Web API
-- Language: C#
-- Authentication: ASP.NET Identity + JWT + Refresh Token
-- Database: SQL Server
-- ORM: Entity Framework Core
-- Testing: xUnit, Moq
+- **Backend Framework:** ASP.NET Core Web API
+- **Language:** C#
+- **Authentication:** ASP.NET Identity + JWT + Refresh Tokens
+- **Database:** SQL Server
+- **ORM:** Entity Framework Core
+- **Testing:** xUnit, Moq
+- **Containerization:** Docker & Docker Compose
+
+---
 
 ## Architecture
-This project follows Clean Architecture, as explained in the Microsoft article:
-[Common web application architectures](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures)
+FruitHub follows **Clean Architecture**, as described in the official Microsoft guide:  
+[https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures](https://learn.microsoft.com/en-us/dotnet/architecture/modern-web-apps-azure/common-web-application-architectures)
 
-The main goal of this architecture is to keep the **business logic independent from infrastructure**, making the application easier to test and maintain, and allowing infrastructure changes without affecting the core logic.
+### Architectural Goals
+- Keep business logic independent from infrastructure
+- Making the application easier to test and maintain
+- Allow infrastructure changes without affecting the core logic
 
 ### Layers
 - API: Controllers, Middlewares
@@ -54,38 +56,54 @@ The main goal of this architecture is to keep the **business logic independent f
 - Dependency Injection
 - Middleware-based error handling
 
-## Setup & Run
-You have **two options** to run the project.
+---
 
-### Option 1: Run Locally
+## Setup & Run (Docker)
+### Prerequisites
+- Docker
+- Docker Compose
+
+### Steps
+
 1. Clone the repository:
-```shell
-git clone https://github.com/omargoher/FruitHub.git
-cd FruitHub
-```
-2. Copy `.env.example` to `.env` and configure environment variables.
-3. Load environment variables:
-```shell
-source .env
-```
-4. Apply Migrations:
-```shell
-dotnet ef database update  -p ./FruitHub.Infrastructure/ -s ./FruitHub.API/ -c AppIdentityDbContext
-dotnet ef database update  -p ./FruitHub.Infrastructure/ -s ./FruitHub.API/ -c ApplicationDbContext
-```
-6. Run the application
-```csharp
-dotnet run
-```
+    ```bash
+    git clone <repository-url>
+    ```
 
-### Option 2: Use Docker
->(Coming soon)
-> Docker support will simplify setup and deployment using containers.
+2. Create an `.env` file based on [`.env.example`](./.env.example) and update values as needed.
 
-## Future Improvements
+3. Build and run the application: 
+    ```bash
+    docker compose up -d --build
+    ```
+
+### After Startup
+- Swagger UI:
+  [http://localhost:8080/swagger/index.html](http://localhost:8080/swagger/index.html)
+- Database migrations are applied automatically on startup
+- Default roles and admin user are seeded
+
+#### Admin Account
+Admin credentials can be **customized using the `.env` file**.
+The following values are the **default configuration** defined in `.env.example`:
+- **Full Name:** Omar Goher
+- **Username:** OmarGoher
+- **Email:** admin@fruithub.com
+- **Password:** Admin@123
+
+---
+
+## Current Limitations
+- No payment gateway integration yet
+- No real-time notifications
+- No rate limiting in v1
+
+---
+
+## Planned Improvements
 - Redis for OTP and password reset token caching
-- Rate limiting for API endpoints- Centralized logging
-- Order cancellation (Improve)
+- Rate limiting for API endpoints
+- Centralized logging
 - Real-time chat
 - Notification System
-- Payment integration
+- Payment gateway integration
