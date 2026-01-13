@@ -67,7 +67,7 @@ FruitHub follows **Clean Architecture**, as described in the official Microsoft 
 
 1. Clone the repository:
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/omargoher/FruitHub.git
     ```
 
 2. Create an `.env` file based on [`.env.example`](./.env.example) and update values as needed.
