@@ -158,7 +158,7 @@ public class UserFavoritesServiceTest
     }
 
     [Fact]
-    public async Task RemoveAsync_WhenFavoriteDoesNotExist_ShouldReturnWithoutSaving()
+    public async Task RemoveAsync_WhenFavoriteDoesNotExist_ShouldThrowNotFoundException()
     {
         // Arrange
         _userFavoritesRepo
@@ -167,17 +167,8 @@ public class UserFavoritesServiceTest
 
         var sut = CreateSut();
 
-        // Act
-        await sut.RemoveAsync(1, 10);
-
-        // Assert
-        _userFavoritesRepo.Verify(
-            x => x.Remove(It.IsAny<int>(), It.IsAny<int>()),
-            Times.Never);
-
-        _uow.Verify(
-            x => x.SaveChangesAsync(),
-            Times.Never);
+        // Act & Assert
+        await Assert.ThrowsAsync<NotFoundException>(() => sut.RemoveAsync(1, 10));
     }
 
     [Fact]

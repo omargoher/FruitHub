@@ -100,12 +100,13 @@ public class CategoryServiceTest
          // Arrange
          _uow.Setup(x => 
                  x.Category.IsNameExistAsync(It.IsAny<string>()))
-             .ReturnsAsync(false);
+             .ReturnsAsync(true);
          
          var sut = CreateSut();
          
          // Act & Assert
-         await Assert.ThrowsAsync<ConflictException>(() => sut.CreateAsync(ValidCategoryDto()));
+         await Assert.ThrowsAsync<ConflictException>(() => 
+             sut.CreateAsync(ValidCategoryDto()));
      }
      
      [Fact]
@@ -114,7 +115,7 @@ public class CategoryServiceTest
          // Arrange
          _uow.Setup(x => 
                  x.Category.IsNameExistAsync(It.IsAny<string>()))
-             .ReturnsAsync(true);
+             .ReturnsAsync(false);
          
          _uow.Setup(x => 
                  x.Category.Add(It.IsAny<Category>()));
@@ -155,7 +156,7 @@ public class CategoryServiceTest
          
          _uow.Setup(x => 
                  x.Category.IsNameExistAsync(It.IsAny<string>()))
-             .ReturnsAsync(false);
+             .ReturnsAsync(true);
          
          var sut = CreateSut();
          
@@ -178,7 +179,7 @@ public class CategoryServiceTest
          
          _uow.Setup(x => 
                  x.Category.IsNameExistAsync(It.IsAny<string>()))
-             .ReturnsAsync(true);
+             .ReturnsAsync(false);
          
          var sut = CreateSut();
          
