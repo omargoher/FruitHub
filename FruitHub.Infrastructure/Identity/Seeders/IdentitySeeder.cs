@@ -4,6 +4,7 @@ using FruitHub.Infrastructure.Identity.Models;
 using FruitHub.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 
 namespace FruitHub.Infrastructure.Identity.Seeders;
 
@@ -15,11 +16,14 @@ public static class IdentitySeeder
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var dbContext = services.GetRequiredService<ApplicationDbContext>();
 
-        const string adminFullName = "Omar Goher";
-        const string adminUserName = "OmarGoher";
+        var config = services.GetRequiredService<IConfiguration>();
+        
+        var adminFullName = config["ADMIN:FULLNAME"];
+        var adminUserName = config["ADMIN:USERNAME"];
+        var adminEmail    = config["ADMIN:EMAIL"];
+        var adminPassword = config["ADMIN:PASSWORD"];
+
         const string adminRole = "Admin";
-        const string adminEmail = "admin@fruithub.com";
-        const string adminPassword = "Admin@123"; // move to config later
 
         if (!await roleManager.RoleExistsAsync(adminRole))
         {
