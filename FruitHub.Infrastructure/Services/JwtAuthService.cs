@@ -1,101 +1,106 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
-using FruitHub.ApplicationCore.DTOs;
 using FruitHub.ApplicationCore.DTOs.Auth.Login;
 using FruitHub.ApplicationCore.DTOs.Auth.Refresh;
 using FruitHub.ApplicationCore.DTOs.Auth.Register;
+using FruitHub.ApplicationCore.DTOs.User;
+using FruitHub.ApplicationCore.Exceptions;
 using FruitHub.ApplicationCore.Interfaces;
 using FruitHub.ApplicationCore.Models;
-using FruitHub.ApplicationCore.Options;
-using FruitHub.Infrastructure.Identity;
+using FruitHub.Infrastructure.Identity.Models;
 using FruitHub.Infrastructure.Interfaces;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
+using FruitHub.ApplicationCore.Interfaces.Services;
+using FruitHub.Infrastructure.Interfaces.Repositories;
+using FruitHub.Infrastructure.Interfaces.Services;
 
 namespace FruitHub.Infrastructure.Services;
 public class JwtAuthService : IAuthService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IUnitOfWork _repositories;
+    private readonly IUnitOfWork _uow;
+    private readonly IIdentityUserRepository _identityUserRepo;
     private readonly ITokenService _tokenService;
     public JwtAuthService(
-        UserManager<ApplicationUser> userManager,
-        IUnitOfWork repositories,
-        ITokenService tokenService
+        IUnitOfWork uow,
+        ITokenService tokenService,
+        IIdentityUserRepository identityUserRepo
         )
     {
-        _userManager = userManager;
-        _repositories = repositories;
+        _uow = uow;
         _tokenService = tokenService;
+        _identityUserRepo = identityUserRepo;
     }
     
-    public async Task<RegisterResponseDto> RegisterAsync(RegisterDto registerDto)
+    public async Task<UserProfileDto> RegisterAsync(RegisterDto registerDto)
     {
-        ArgumentNullException.ThrowIfNull(registerDto);
-        
-        ApplicationUser? authUser = null;
-        RegisterResponseDto response = new RegisterResponseDto();
+        ApplicationUser? identityUser = null;
         
         try
         {
-            // Prop in dto controller validate it
-            
-            authUser = new ApplicationUser
+            // 1. Identity creation
+            identityUser = new ApplicationUser
             {
                 UserName = registerDto.UserName,
                 Email = registerDto.Email
             };
-           
-            var identityResult = await _userManager.CreateAsync(authUser, registerDto.Password);
-
+            
+            var identityResult = await _identityUserRepo.CreateAsync(identityUser, registerDto.Password);
            
             if (!identityResult.Succeeded)
             {
-                response.Errors = MapRegistrationIdentityErrors(identityResult.Errors);
-                return response;
+                throw new IdentityOperationException(
+                    identityResult.Errors.Select(e => e.Description));
             }
 
-            identityResult = await _userManager.AddToRoleAsync(authUser, "User");
+            // 2. Role assignment
+            identityResult = await _identityUserRepo.AddToRoleAsync(identityUser, "User");
 
             if (!identityResult.Succeeded)
             {
-                response.Errors = MapRegistrationIdentityErrors(identityResult.Errors);
-                await _userManager.DeleteAsync(authUser);
-                return response;
+                throw new IdentityOperationException(
+                    identityResult.Errors.Select(e => e.Description));
             }
             
-            var user = new User
+            // 3. Business user creation
+            var businessUser = new User
             {
-                UserId = authUser.Id,
-                Email = authUser.Email,
+                UserId = identityUser.Id,
+                Email = identityUser.Email,
                 FullName = registerDto.FullName
             };
             
-            _repositories.Repository<User, int>().Insert(user);
+            _uow.User.Add(businessUser);
 
-            var result = await _repositories.SaveChangesAsync();
-            if (result == 0)
+            var saved = await _uow.SaveChangesAsync();
+            //
+            // if (saved == 0)
+            // {
+            //     throw new RegistrationFailedException("Failed to create user");
+            // }
+
+            // 4. Claims linking
+            identityResult = await _identityUserRepo.AddClaimAsync(identityUser, new Claim(
+                "business_user_id",
+                businessUser.Id.ToString()
+            ));
+            if (!identityResult.Succeeded)
             {
-                response.Errors.Add("Registration failed");
-                await _userManager.DeleteAsync(authUser);
-                return response;
+                // delete business user ??
+                throw new IdentityOperationException(
+                    identityResult.Errors.Select(e => e.Description));
             }
-            
-            response.FullName = user.FullName;
-            response.UserName = authUser.UserName;
-            response.Email = user.Email;
-            response.IsRegistered = true;
-            
+
+            var response = new UserProfileDto
+            {
+                Id = businessUser.Id,
+                FullName = businessUser.FullName,
+                Email = businessUser.Email
+            };
             return response;
         }
         catch
         {
-            if (authUser != null)
-                await _userManager.DeleteAsync(authUser);
+            if (identityUser != null)
+                await _identityUserRepo.DeleteAsync(identityUser);
 
             throw;
         }
@@ -103,117 +108,67 @@ public class JwtAuthService : IAuthService
 
     public async Task<LoginResponseDto> LoginAsync(LoginDto loginDto)
     {
-        ArgumentNullException.ThrowIfNull(loginDto);
         var response = new LoginResponseDto();
 
-        // var user = await _userManager.FindByEmailAsync(loginDto.Email);
-        var user = await _userManager.Users.Include(u => u.RefreshTokens)
-            .SingleOrDefaultAsync(u => u.Email == loginDto.Email);
+        var user = await _identityUserRepo.GetByEmail(loginDto.Email);
 
-        if (user == null)
-        {
-            response.Errors.Add("This email not for any user");
-            return response;
+        if (user == null || !await _identityUserRepo.CheckPasswordAsync(user, loginDto.Password))
+        { 
+            throw new InvalidCredentialsException();
         }
 
-        if (!await _userManager.CheckPasswordAsync(user, loginDto.Password))
-        {
-            response.Errors.Add("Password Is Incorrect");
-            return response;
-        }
-
-        // how frontend know error is email is not verify
         if (!user.EmailConfirmed)
         {
-            response.Errors.Add("Email is not verify");
-            return response;
+            throw new EmailNotConfirmedException();
         }
 
-        // Generate JWT
         var jwtToken = await _tokenService.GenerateJwtAsync(user);
 
-        // Generate Refresh Token
         var refreshToken = await _tokenService.CreateRefreshTokenAsync(user);
 
         response.Email = user.Email;
-        response.Token = new JwtSecurityTokenHandler().WriteToken(jwtToken);
-        response.TokenExpiresAt = jwtToken.ValidTo;
+        response.AccessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken);
+        response.AccessTokenExpiresAt = jwtToken.ValidTo;
         response.RefreshToken = refreshToken.Token;
-        response.RefreshExpiresAt = refreshToken.ExpiresAt;
-        response.IsAuthenticated = true;
+        response.RefreshTokenExpiresAt = refreshToken.ExpiresAt;
 
         return response;
     }
 
     public async Task<LoginResponseDto> RefreshAsync(RefreshTokenRequestDto refreshToken)
     {
-        ArgumentNullException.ThrowIfNull(refreshToken);
         var response = new LoginResponseDto();
-        
-       var user = await _userManager.Users
-           .Include(u => u.RefreshTokens)
-           .FirstOrDefaultAsync(u => u.RefreshTokens.Any(t => t.Token == refreshToken.RefreshToken));
+
+        var user = await _identityUserRepo.GetByRefreshTokenWithRefreshTokens(refreshToken.RefreshToken);
 
        if (user == null)
        {
-           response.Errors.Add("INVALID_TOKEN");
-           return response;
+           throw new InvalidRefreshTokenException();
        }
         
-       var oldToken = user.RefreshTokens
-           .Single(t => t.Token == refreshToken.RefreshToken);
+       var newRefreshToken = await _tokenService.CreateRefreshTokenAsync(user, refreshToken.RefreshToken);
 
-       if (oldToken.IsExpired || oldToken.IsRevoked)
-       {
-           response.Errors.Add("INVALID_TOKEN");
-           return response;
-       }
-       
-       // Generate JWT
        var jwtToken = await _tokenService.GenerateJwtAsync(user);
 
-       // Generate Refresh Token
-       var newRefreshToken = await _tokenService.CreateRefreshTokenAsync(user);
-
        response.Email = user.Email;
-       response.Token = new JwtSecurityTokenHandler().WriteToken(jwtToken);
-       response.TokenExpiresAt = jwtToken.ValidTo;
+       response.AccessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken);
+       response.AccessTokenExpiresAt = jwtToken.ValidTo;
        response.RefreshToken = newRefreshToken.Token;
-       response.RefreshExpiresAt = newRefreshToken.ExpiresAt;
-       response.IsAuthenticated = true;
+       response.RefreshTokenExpiresAt = newRefreshToken.ExpiresAt;
 
        return response;
     }
 
-    public async Task LogoutAsync(string userId)
+    public async Task LogoutAsync(string identityUserId)
     {
-        ArgumentNullException.ThrowIfNull(userId);
-        var user = await _userManager.Users.Include(u => u.RefreshTokens)
-            .SingleOrDefaultAsync(u => u.Id == userId);
+        var user = await _identityUserRepo.GetByIdWithRefreshTokens(identityUserId);
 
         if (user == null)
         {
             return;
         }
-        await _tokenService.RevokeAllAsync(user);
-    }
-   
-    private static List<string> MapRegistrationIdentityErrors(IEnumerable<IdentityError> errors)
-    {
-        var result = new List<string>();
-
-        foreach (var error in errors)
-        {
-            if (error.Code.Contains("Password"))
-                result.Add(error.Description);
-            else if (error.Code.Contains("DuplicateUserName"))
-                result.Add("Username already exists");
-            else if (error.Code.Contains("DuplicateEmail"))
-                result.Add("Email already exists");
-            else
-                result.Add("Registration failed");
-        }
-
-        return result;
+        _tokenService.RevokeAllAsync(user);
+        
+        await _identityUserRepo.UpdateAsync(user);
     }
 }

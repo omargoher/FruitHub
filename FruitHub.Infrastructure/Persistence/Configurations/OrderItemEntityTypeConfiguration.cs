@@ -12,7 +12,7 @@ public class OrderItemEntityTypeConfiguration : IEntityTypeConfiguration<OrderIt
         builder.Property(oi => oi.Id)
             .ValueGeneratedOnAdd();
 
-        builder.Property(oi => oi.Quentity)
+        builder.Property(oi => oi.Quantity)
             .IsRequired();
 
         builder.Property(oi => oi.PricePerPiece)
@@ -20,7 +20,7 @@ public class OrderItemEntityTypeConfiguration : IEntityTypeConfiguration<OrderIt
             .IsRequired();
         
         builder.HasOne(oi => oi.Product)
-            .WithMany()
+            .WithMany(p => p.OrderItems)
             .HasForeignKey(oi => oi.ProductId)
             .IsRequired();
     }

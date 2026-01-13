@@ -1,4 +1,6 @@
 using System.Linq.Expressions;
+using FruitHub.ApplicationCore.Enums;
+using FruitHub.ApplicationCore.Interfaces.Repository;
 using FruitHub.ApplicationCore.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,74 +14,39 @@ public class GenericRepository<T, TKey> : IGenericRepository<T, TKey> where T : 
     {
         _context = context;
     }
-    
-    public async Task<T?> GetByIdAsync(TKey id, string[]? includeProperties = null)
+
+    public async Task<T?> GetByIdAsync(TKey id)
     {
-        IQueryable<T> query = _context.Set<T>();
-
-        if (includeProperties != null)
-        {
-            query = query.Include(string.Join(".", includeProperties));
-        }
-
-        return await query.SingleOrDefaultAsync(t =>
-            EqualityComparer<TKey>.Default.Equals(t.Id, id));
+        return await  _context.Set<T>().FindAsync(id);
     }
 
-    public async Task<IEnumerable<T>> GetAllAsync(string[]? includeProperties = null)
+    public async Task<IReadOnlyList<T>> GetAllAsync()
     {
-        IQueryable<T> query = _context.Set<T>();
-
-        if (includeProperties != null)
-        {
-            query = query.Include(string.Join(".", includeProperties));
-        }
-
-        return await query.ToListAsync();
+        return await _context.Set<T>().ToListAsync();
     }
 
-    public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>>? filter = null
-        , string[]? includeProperties = null)
+    public async Task<IReadOnlyList<T>> FindAsync(Expression<Func<T, bool>> filter)
     {
-        IQueryable<T> query = _context.Set<T>();
-
-        if (filter != null)
-        {
-            query = query.Where(filter);
-        }
-        if (includeProperties != null)
-        {
-            query = query.Include(string.Join(".", includeProperties));
-        }
-
-        return await query.ToListAsync();
+        return await _context.Set<T>().Where(filter).ToListAsync();
     }
 
-    public void Insert(T entity)
+    public async Task<bool> IsExistAsync(TKey id)
+    {
+        return await _context.Set<T>()
+            .AnyAsync(t => t.Id!.Equals(id));
+    }
+    public void Add(T entity)
     {
         _context.Set<T>().Add(entity);
     }
 
-    public void Update(T entityToUpdate)
+    public void Update(T entity)
     {
-        _context.Set<T>().Update(entityToUpdate);
+        _context.Set<T>().Update(entity);
     }
-    
-    public void DeleteById(TKey id)
+   
+    public void Remove(T entity)
     {
-        var entityToDelete = Activator.CreateInstance<T>();
-        entityToDelete.Id = id;
-        
-        // if (entityToDelete == null)
-            // throw new KeyNotFoundException($"{typeof(T).Name} not found");
-        
-        Delete(entityToDelete);
+        _context.Set<T>().Remove(entity);
     }
-
-    public void Delete(T entityToDelete)
-    {
-        _context.Set<T>().Remove(entityToDelete);
-    }
-
-    
 }

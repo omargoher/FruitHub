@@ -1,3 +1,4 @@
+using FruitHub.ApplicationCore.Enums.Order;
 using FruitHub.ApplicationCore.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,7 +9,6 @@ public class OrderEntityTypeConfiguration : IEntityTypeConfiguration<Order>
 {
     public void Configure(EntityTypeBuilder<Order> builder)
     {
-        // TODO Add defult value for bool
         builder.HasKey(o => o.Id);
         builder.Property(o => o.Id)
             .ValueGeneratedOnAdd();
@@ -44,14 +44,13 @@ public class OrderEntityTypeConfiguration : IEntityTypeConfiguration<Order>
             .HasColumnType("decimal(18,2)")
             .IsRequired();
         
-        builder.Property(o => o.IsShipped)
-            .HasDefaultValue(false)
-            .IsRequired();
-        
-        builder.Property(o => o.IsPayed)
-            .HasDefaultValue(false)
+        builder.Property(o => o.OrderStatus)
+            .HasConversion<int>()
             .IsRequired();
 
+        builder.Property(o => o.OrderStatus)
+            .HasDefaultValue(OrderStatus.Pending);
+        
         builder.HasOne(o => o.User)
             .WithMany(u => u.Orders)
             .HasForeignKey(o => o.UserId)

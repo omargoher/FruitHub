@@ -1,34 +1,41 @@
 using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Repository;
+using FruitHub.Infrastructure.Interfaces;
 using FruitHub.Infrastructure.Persistence.Repositories;
 
 namespace FruitHub.Infrastructure.Persistence.UnitOfWork;
 
+// i don't use the Dictionary of repos i just add all repos as a prop in unit of work and initialize it in constructor
 public class UnitOfWork : IUnitOfWork
 {
     private readonly ApplicationDbContext _context;
-    private readonly Dictionary<Type, object> _repositories = new();
-
     public UnitOfWork(ApplicationDbContext context)
     {
         _context = context;
+        User = new UserRepository(_context);
+        Admin = new AdminRepository(_context);
+        Category = new CategoryRepository(_context);
+        Product = new ProductRepository(_context);
+        Cart = new CartRepository(_context);
+        Order = new OrderRepository(_context);
+        UserFavorites = new UserFavoritesRepository(_context);
     }
-
-    public IGenericRepository<T, TKey> Repository<T, TKey>()
-        where T : class, IEntity<TKey>
-    {
-        var type = typeof(T);
-
-        if (!_repositories.TryGetValue(type, out var repo))
-        {
-            repo = new GenericRepository<T, TKey>(_context);
-            _repositories[type] = repo;
-        }
-
-        return (IGenericRepository<T, TKey>)repo;
-    }
-
+    public IUserRepository User { get; private set; }
+    public IAdminRepository Admin { get; private set; }
+    public ICartRepository Cart { get; private set; }
+    public IOrderRepository Order { get; private set; }
+    public ICategoryRepository Category { get; private set; }
+    public IProductRepository Product { get; private set; }
+    public IUserFavoritesRepository UserFavorites { get; private set; }
+    
     public async Task<int> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync();
     }
+    
+    public void Dispose()
+    {
+        _context.Dispose();
+    }
+
 }

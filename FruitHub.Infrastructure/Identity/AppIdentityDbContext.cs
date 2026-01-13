@@ -1,4 +1,5 @@
 using FruitHub.ApplicationCore.Models;
+using FruitHub.Infrastructure.Identity.Models;
 using FruitHub.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;

@@ -1,8 +1,15 @@
+using FruitHub.ApplicationCore.Interfaces.Repository;
+
 namespace FruitHub.ApplicationCore.Interfaces;
 
-public interface IUnitOfWork
+public interface IUnitOfWork : IDisposable
 {
-    IGenericRepository<T, TKey> Repository<T, TKey>()
-        where T : class, IEntity<TKey>;
+    IUserRepository User { get; }
+    ICategoryRepository Category { get; }
+    IProductRepository Product { get; }
+    IUserFavoritesRepository UserFavorites { get;}
+    ICartRepository Cart { get;}
+    IOrderRepository Order { get;}
+    IAdminRepository Admin { get;}
     Task<int> SaveChangesAsync();
 }

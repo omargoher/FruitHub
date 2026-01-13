@@ -1,5 +1,5 @@
 using FruitHub.ApplicationCore.Interfaces;
-using FruitHub.Infrastructure.Interfaces;
+using FruitHub.Infrastructure.Interfaces.Services;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace FruitHub.Infrastructure.Services; 

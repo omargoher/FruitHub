@@ -34,7 +34,7 @@ public class ProductEntityTypeConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.ExpirationPeriodByDays)
             .IsRequired();
         
-        builder.Property(p => p.ImagePath)
+        builder.Property(p => p.ImageUrl)
             .HasMaxLength(100)
             .IsRequired();
         

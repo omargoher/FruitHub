@@ -15,6 +15,7 @@ public class RegisterDto
     
     [Required]
     [MinLength(8)]
+    [MaxLength(255)]
     [DataType(DataType.Password)]
     [RegularExpression(
         @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$",

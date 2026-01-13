@@ -2,9 +2,12 @@ bin/
 obj/
 .vs/
 .idea/
+images/
+storage/
 *.user
 *.suo
 *.cache
 *.log
-*.db
+*.db*
+.env
 appsettings.Development.json

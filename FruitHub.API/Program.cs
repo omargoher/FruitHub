@@ -1,8 +1,18 @@
 using System.Text;
+using System.Text.Json.Serialization;
+using FruitHub.API.Middlewares;
+using FruitHub.API.Responses;
+using FruitHub.ApplicationCore.Errors;
 using FruitHub.ApplicationCore.Interfaces;
+using FruitHub.ApplicationCore.Interfaces.Services;
 using FruitHub.ApplicationCore.Options;
+using FruitHub.ApplicationCore.Services;
 using FruitHub.Infrastructure.Identity;
-using FruitHub.Infrastructure.Interfaces;
+using FruitHub.Infrastructure.Identity.Models;
+using FruitHub.Infrastructure.Identity.Repositories;
+using FruitHub.Infrastructure.Identity.Seeders;
+using FruitHub.Infrastructure.Interfaces.Repositories;
+using FruitHub.Infrastructure.Interfaces.Services;
 using FruitHub.Infrastructure.Persistence;
 using FruitHub.Infrastructure.Persistence.UnitOfWork;
 using FruitHub.Infrastructure.Services;
@@ -11,6 +21,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 namespace FruitHub.API;
 
@@ -20,31 +31,85 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Add services to the container.
-
-        builder.Services.AddControllers();
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+        builder.Services.AddControllers().AddJsonOptions(options =>
+        {
+            options.JsonSerializerOptions.Converters.Add(
+                new JsonStringEnumConverter());
+        });
         builder.Services.AddOpenApi();
 
+        builder.Services.AddEndpointsApiExplorer(); 
+        
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "FruitHub API",
+                Version = "v1",
+                Description = "FruitHub is an e-commerce REST API for managing fruits, categories, carts, and orders.",
+                Contact = new OpenApiContact
+                {
+                    Name = "Omar Goher",
+                    Email = "omargoher59@gmail.com"
+                }
+            });
+            options.UseInlineDefinitionsForEnums();
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                Scheme = "Bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "Enter JWT token like: Bearer {your_token}"
+            });
+            
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+            
+            options.IncludeXmlComments(
+                Path.Combine(AppContext.BaseDirectory, "FruitHub.API.xml"));
+            
+            options.IncludeXmlComments(
+                Path.Combine(AppContext.BaseDirectory, "FruitHub.ApplicationCore.xml"));
+        });
+        
+        // DB
+        var connectionString = builder.Configuration.GetConnectionString("SqlServer");
         builder.Services.AddDbContext<ApplicationDbContext>(
-            options => options.UseSqlite(builder.Configuration.GetConnectionString("Sqlite"),
+            options => options.UseSqlServer(connectionString,
                 b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
         
         builder.Services.AddDbContext<AppIdentityDbContext>(
-            options => options.UseSqlite(builder.Configuration.GetConnectionString("Sqlite"),
+            options => options.UseSqlServer(connectionString,
                 b => b.MigrationsAssembly(typeof(AppIdentityDbContext).Assembly.FullName)));
         
-        // Bind Jwt section to JwtOptions
-        var jwtOptions = builder.Configuration
-            .GetSection("Jwt")
-            .Get<JwtOptions>();
+        // Options
 
+        var jwtOptions = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()
+                         ?? throw new InvalidOperationException("JWT configuration is missing");
         builder.Services.Configure<JwtOptions>(
             builder.Configuration.GetSection("Jwt"));    
+        
+        builder.Services.Configure<RefreshTokenOptions>(
+            builder.Configuration.GetSection("RefreshToken"));
         
         builder.Services.Configure<EmailOptions>(
             builder.Configuration.GetSection("EmailSettings"));
 
+        // Identity
         builder.Services.AddIdentityCore<ApplicationUser>(options =>
                 {
                     options.Password.RequiredLength = 8;
@@ -52,43 +117,26 @@ public class Program
                     options.Password.RequireLowercase = true;
                     options.Password.RequireUppercase = true;
                     options.Password.RequireNonAlphanumeric = true;
-                    // options.Password.RequiredUniqueChars = ;
+
                     options.User.RequireUniqueEmail = true;
+                    
                     options.User.AllowedUserNameCharacters =
                         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._";
-                    // options.Lockout.MaxFailedAccessAttempts = 5;
-                    // options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-                    // options.Lockout.AllowedForNewUsers = true;
-                    options.SignIn.RequireConfirmedEmail = true; // Email confirmation required
-                    // options.SignIn.RequireConfirmedPhoneNumber = false;// Phone confirmation required
-                    // options.SignIn.RequireConfirmedAccount = false;    // Account confirmation required
-                    // options.Tokens.AuthenticatorTokenProvider = 
-                    //     TokenOptions.DefaultAuthenticatorProvider;
-                    //
-                    // options.Tokens.EmailConfirmationTokenProvider =
-                    //     TokenOptions.DefaultEmailProvider;
-                    //
-                    // options.Tokens.PasswordResetTokenProvider =
-                    //     TokenOptions.DefaultEmailProvider;
-                    //
-                    // options.Tokens.ChangeEmailTokenProvider =
-                    //     TokenOptions.DefaultEmailProvider;
-                    //
-                    // options.Tokens.ChangePhoneNumberTokenProvider =
-                    //     TokenOptions.DefaultPhoneProvider;
+                    
+                    options.SignIn.RequireConfirmedEmail = true; 
                 }
             )
             .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<AppIdentityDbContext>()
             .AddDefaultTokenProviders();
 
+        // Auth
         builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme,
-
                 options =>
                 {
                     options.RequireHttpsMetadata = false; // to dev env
@@ -99,63 +147,129 @@ public class Program
                         ValidateAudience = true,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-
                         ValidIssuer = jwtOptions.Issuer,
                         ValidAudience = jwtOptions.Audience,
-                        // LifetimeValidator = 
                         IssuerSigningKey = new SymmetricSecurityKey(
                             Encoding.UTF8.GetBytes(jwtOptions.SigningKey)
                         ),
+                    };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnChallenge = context =>
+                        {
+                            context.HandleResponse();
+
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            context.Response.ContentType = "application/json";
+
+                            var response = new ErrorResponse
+                            {
+                                Message = "User is not authenticated.",
+                                Code = ErrorsCode.Unauthorized
+                            };
+
+                            return context.Response.WriteAsJsonAsync(response);
+                        },
+
+                        OnForbidden = context =>
+                        {
+                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            context.Response.ContentType = "application/json";
+
+                            var response = new ErrorResponse
+                            {
+                                Message = "User is not authorized to access this resource.",
+                                Code = ErrorsCode.Forbidden
+                            };
+
+                            return context.Response.WriteAsJsonAsync(response);
+                        }
                     };
                 }
             );
         
         builder.Services.AddAuthorization();
 
+        // API Behavior
         builder.Services.Configure<ApiBehaviorOptions>(options =>
         {
             options.InvalidModelStateResponseFactory = context =>
             {
                 var errors = context.ModelState
-                    .SelectMany(x => x.Value.Errors.Select(e => new
+                    .SelectMany(x => x.Value!.Errors.Select(e => new
                     {
                         Field = x.Key,
                         Error = e.ErrorMessage
-                    }));
+                    })).ToList();
 
-                return new BadRequestObjectResult(new
+                return new BadRequestObjectResult(new ErrorResponse
                 {
+                    Code = ErrorsCode.ValidationError,
                     Message = "Validation failed",
                     Errors = errors
                 });
             };
         });
 
+        // DI
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-       
+        
+        builder.Services.AddScoped<ICartService, CartService>();
+        builder.Services.AddScoped<IOrderService, OrderService>();
+        builder.Services.AddScoped<IUserFavoritesService, UserFavoritesService>();
+        builder.Services.AddScoped<IUserService, UserService>();
         builder.Services.AddScoped<IAuthService, JwtAuthService>();
+        builder.Services.AddScoped<ICategoryService, CategoryService>();
+        builder.Services.AddScoped<IProductService, ProductService>();
+        builder.Services.AddScoped<IImageService, ImageService>();
+        builder.Services.AddScoped<IImageValidator, ImageValidator>();
         
         builder.Services.AddScoped<ITokenService, TokenService>();
+        builder.Services.AddScoped<IEmailConfirmationService, EmailConfirmationService>();
+        builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IOtpService, OtpService>();
+        builder.Services.AddScoped<IIdentityUserRepository, IdentityUserRepository>();
         
-        // builder.Services.AddMemoryCache();
-        // builder.Services.AddSingleton<IAppCache, MemoryAppCache>();
+        builder.Services.AddMemoryCache();
+        builder.Services.AddSingleton<IAppCache, MemoryAppCache>();
         
         var app = builder.Build();
         
-        
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
+        // Apply pending migrations automatically
+        using (var scope = app.Services.CreateScope())
         {
-            app.MapOpenApi();
+            var identity = scope.ServiceProvider.GetRequiredService<AppIdentityDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            identity.Database.Migrate();
+            db.Database.Migrate();
         }
-
+        
+        // Seed Data
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            RoleSeeder.SeedRolesAsync(services).GetAwaiter().GetResult();
+            IdentitySeeder.SeedAdminAsync(services).GetAwaiter().GetResult();
+        }
+        
+        // Middleware pipeline
+        
+        app.MapOpenApi();
+        app.UseSwagger();
+        app.UseSwaggerUI();
+            
         app.UseHttpsRedirection();
 
+        /*
+         * I create this middleware to map the exceptions to status code and msg
+         */
+        app.UseMiddleware<ExceptionMiddleware>();
+        
+        app.UseAuthentication();
         app.UseAuthorization();
-
-
+        
         app.MapControllers();
-
         app.Run();
     }
 }
